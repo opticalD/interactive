@@ -16,7 +16,7 @@ export const profile = {
   links: [
     { label: "LinkedIn", href: "https://www.linkedin.com/in/shubhranshu-pattanaik-12ty/" },
     { label: "GitHub", href: "https://github.com/opticalD" },
-    { label: "Résumé (PDF)", href: "#" }, // ← host the PDF and link it
+    { label: "Résumé (PDF)", href: "https://drive.google.com/file/d/1izeRmeAyr-RUMivI0NaY0MYS-AmkuOHK/view?usp=sharing" },
   ],
 };
 

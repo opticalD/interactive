@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { useData } from "./hooks/useData";
 import { AuthScreen } from "./components/AuthScreen";
 import { InfoButton } from "./components/InfoButton";
+import { Onboarding, onboardingKey } from "./components/Onboarding";
 import { CheckInPanel } from "./components/CheckInPanel";
 import { HabitsPanel } from "./components/HabitsPanel";
 import { Analytics } from "./components/Analytics";
@@ -17,6 +19,16 @@ function Dashboard() {
   const wellness = useWellness(user.id);
   const today = format(new Date(), "yyyy-MM-dd");
   const name = (user.user_metadata?.display_name as string) || user.email?.split("@")[0] || "there";
+
+  // Show the guided tour once per account (first time on this device).
+  const [showTour, setShowTour] = useState(false);
+  useEffect(() => {
+    if (!localStorage.getItem(onboardingKey(user.id))) setShowTour(true);
+  }, [user.id]);
+  const finishTour = () => {
+    localStorage.setItem(onboardingKey(user.id), "1");
+    setShowTour(false);
+  };
 
   return (
     <div className="mx-auto min-h-full max-w-6xl px-5 py-10">
@@ -34,6 +46,12 @@ function Dashboard() {
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
+          <button
+            onClick={() => setShowTour(true)}
+            className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
+          >
+            🧭 Tour
+          </button>
           <InfoButton />
           <button
             onClick={signOut}
@@ -65,6 +83,10 @@ function Dashboard() {
       <footer className="mt-10 text-center text-xs text-white/30">
         Valence–arousal circumplex model · your data is private to your account · React · Supabase · Recharts
       </footer>
+
+      <AnimatePresence>
+        {showTour && <Onboarding name={name} onDone={finishTour} />}
+      </AnimatePresence>
     </div>
   );
 }

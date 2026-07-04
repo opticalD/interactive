@@ -49,10 +49,12 @@ export interface WellnessItem {
   kind: WellnessKind;
   name: string;
   emoji: string;
-  dose: string | null;
-  schedule: string | null;
+  dose: string | null; // supplements: dose/amount
+  schedule: string | null; // when it's used (AM/PM/…)
   brand: string | null;
   notes: string | null;
+  frequency: string | null; // skincare: how often
+  concern: string | null; // skincare: what it targets
   color: string;
   sort_order: number;
   archived: boolean;
@@ -65,7 +67,27 @@ export interface WellnessLog {
   date: string;
 }
 
-export const SCHEDULES = ["AM", "PM", "Both", "With food", "As needed"] as const;
+export const SUPPLEMENT_SCHEDULES = ["AM", "PM", "Both", "With food", "As needed"] as const;
+export const SKINCARE_SCHEDULES = ["AM", "PM", "Both", "As needed"] as const;
+export const SKINCARE_FREQUENCY = [
+  "Daily",
+  "Every other day",
+  "2–3× a week",
+  "Weekly",
+  "As needed",
+] as const;
+/** Common skin concerns offered as suggestions (free text still allowed). */
+export const SKINCARE_CONCERNS = [
+  "Hydration",
+  "Acne / breakouts",
+  "Anti-aging",
+  "Brightening",
+  "Sun protection",
+  "Soothing / redness",
+  "Exfoliation",
+  "Oil control",
+  "Barrier repair",
+] as const;
 
 /** One-tap starter suggestions so the tracker never feels empty. */
 export const WELLNESS_SUGGESTIONS: Record<

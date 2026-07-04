@@ -3,7 +3,10 @@ import confetti from "canvas-confetti";
 import { AnimatePresence, motion } from "framer-motion";
 import type { WellnessData } from "../hooks/useWellness";
 import {
-  SCHEDULES,
+  SKINCARE_CONCERNS,
+  SKINCARE_FREQUENCY,
+  SKINCARE_SCHEDULES,
+  SUPPLEMENT_SCHEDULES,
   WELLNESS_SUGGESTIONS,
   type WellnessItem,
   type WellnessKind,
@@ -39,6 +42,8 @@ function WellnessColumn({
 }) {
   const meta = KIND_META[kind];
   const items = data.items.filter((i) => i.kind === kind);
+  // Brands the user has entered before — offered as suggestions across items.
+  const knownBrands = [...new Set(data.items.map((i) => i.brand).filter((b): b is string => !!b))].sort();
   const doneToday = (id: string) => data.logs.some((l) => l.item_id === id && l.date === today);
   const doneCount = items.filter((i) => doneToday(i.id)).length;
   const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
@@ -65,6 +70,7 @@ function WellnessColumn({
             <WellnessItemRow
               key={item.id}
               item={item}
+              knownBrands={knownBrands}
               done={doneToday(item.id)}
               onToggle={() => {
                 data.toggleToday(item.id, today);
@@ -113,18 +119,23 @@ function ProgressRing({ pct, color, done }: { pct: number; color: string; done: 
 
 function WellnessItemRow({
   item,
+  knownBrands,
   done,
   onToggle,
   onUpdate,
   onDelete,
 }: {
   item: WellnessItem;
+  knownBrands: string[];
   done: boolean;
   onToggle: () => void;
   onUpdate: (patch: Partial<WellnessItem>) => void;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const isSkincare = item.kind === "skincare";
+  const schedules = isSkincare ? SKINCARE_SCHEDULES : SUPPLEMENT_SCHEDULES;
+  const secondary = isSkincare ? item.frequency : item.dose;
 
   return (
     <motion.div
@@ -175,7 +186,7 @@ function WellnessItemRow({
               {item.schedule}
             </span>
           )}
-          {item.dose && <span className="text-[11px] text-white/40">{item.dose}</span>}
+          {secondary && <span className="text-[11px] text-white/40">{secondary}</span>}
         </button>
 
         <button onClick={() => setOpen((o) => !o)} className="shrink-0 text-xs text-white/30 hover:text-white/60">
@@ -192,24 +203,63 @@ function WellnessItemRow({
             className="overflow-hidden"
           >
             <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
-              <Field label="Dose / amount" value={item.dose ?? ""} placeholder="e.g. 1000 IU" onSave={(v) => onUpdate({ dose: v || null })} />
-              <Field label="Brand" value={item.brand ?? ""} placeholder="e.g. Now Foods" onSave={(v) => onUpdate({ brand: v || null })} />
-              <label className="text-xs text-white/50">
-                When
-                <select
-                  value={item.schedule ?? ""}
-                  onChange={(e) => onUpdate({ schedule: e.target.value || null })}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-white/85 outline-none focus:border-cyan-400"
-                >
-                  <option value="">—</option>
-                  {SCHEDULES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Field label="Notes" value={item.notes ?? ""} placeholder="why you take it…" onSave={(v) => onUpdate({ notes: v || null })} />
+              {/* Brand — with suggestions from brands the user already uses */}
+              <Field
+                label="Brand"
+                value={item.brand ?? ""}
+                placeholder={isSkincare ? "e.g. CeraVe" : "e.g. Now Foods"}
+                suggestions={knownBrands}
+                onSave={(v) => onUpdate({ brand: v || null })}
+              />
+
+              {/* When — schedule options differ by kind */}
+              <Select
+                label="When"
+                value={item.schedule ?? ""}
+                options={schedules as readonly string[]}
+                onSave={(v) => onUpdate({ schedule: v || null })}
+              />
+
+              {isSkincare ? (
+                <>
+                  <Select
+                    label="How often"
+                    value={item.frequency ?? ""}
+                    options={SKINCARE_FREQUENCY as readonly string[]}
+                    onSave={(v) => onUpdate({ frequency: v || null })}
+                  />
+                  <Field
+                    label="Targets"
+                    value={item.concern ?? ""}
+                    placeholder="e.g. Hydration"
+                    suggestions={SKINCARE_CONCERNS as readonly string[]}
+                    onSave={(v) => onUpdate({ concern: v || null })}
+                  />
+                  <div className="col-span-2">
+                    <Field
+                      label="Notes"
+                      value={item.notes ?? ""}
+                      placeholder="texture, layering order, reactions…"
+                      onSave={(v) => onUpdate({ notes: v || null })}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Field
+                    label="Dose / amount"
+                    value={item.dose ?? ""}
+                    placeholder="e.g. 1000 IU"
+                    onSave={(v) => onUpdate({ dose: v || null })}
+                  />
+                  <Field
+                    label="Notes"
+                    value={item.notes ?? ""}
+                    placeholder="why you take it…"
+                    onSave={(v) => onUpdate({ notes: v || null })}
+                  />
+                </>
+              )}
             </div>
             <button onClick={onDelete} className="mt-3 text-[11px] text-red-400/70 hover:text-red-400">
               Remove {item.name}
@@ -221,26 +271,70 @@ function WellnessItemRow({
   );
 }
 
+let listSeq = 0;
+
 function Field({
   label,
   value,
   placeholder,
+  suggestions,
   onSave,
 }: {
   label: string;
   value: string;
   placeholder?: string;
+  suggestions?: readonly string[];
   onSave: (v: string) => void;
 }) {
+  const [listId] = useState(() => `wl-${++listSeq}`);
+  const hasList = suggestions && suggestions.length > 0;
   return (
     <label className="text-xs text-white/50">
       {label}
       <input
         defaultValue={value}
         placeholder={placeholder}
+        list={hasList ? listId : undefined}
         onBlur={(e) => e.target.value !== value && onSave(e.target.value)}
         className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-white/85 outline-none focus:border-cyan-400"
       />
+      {hasList && (
+        <datalist id={listId}>
+          {suggestions!.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      )}
+    </label>
+  );
+}
+
+function Select({
+  label,
+  value,
+  options,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onSave: (v: string) => void;
+}) {
+  return (
+    <label className="text-xs text-white/50">
+      {label}
+      <select
+        value={value}
+        onChange={(e) => onSave(e.target.value)}
+        className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-white/85 outline-none focus:border-cyan-400"
+      >
+        <option value="">—</option>
+        {options.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
