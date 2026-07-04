@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { profile } from "./content";
 import { ScrollProgress } from "./components/ScrollProgress";
 import { Hero } from "./components/Hero";
+import { Metrics } from "./components/Metrics";
 import { StoryChapters } from "./components/StoryChapters";
 import { Projects, Skills } from "./components/SkillsProjects";
 
@@ -10,6 +11,7 @@ export default function App() {
     <main className="relative">
       <ScrollProgress />
       <Hero />
+      <Metrics />
       <StoryChapters />
       <Skills />
       <Projects />
