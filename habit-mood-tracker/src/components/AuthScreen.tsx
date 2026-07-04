@@ -7,7 +7,7 @@ import { InfoButton } from "./InfoButton";
 
 export function AuthScreen() {
   const { signIn, signUp } = useAuth();
-  const { setup: setupCrypto } = useCrypto();
+  const { setup: setupCrypto, beginAuth, endAuth } = useCrypto();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,17 +21,22 @@ export function AuthScreen() {
     setErr(null);
     setMsg(null);
     setBusy(true);
+    beginAuth(); // Gate shows a spinner (not the unlock screen) until the key is ready
     if (mode === "in") {
       const error = await signIn(email, password);
       if (error) {
         setBusy(false);
+        endAuth();
         setErr(error);
         return;
       }
-      // Derive the encryption key from the same password.
-      const cryptoErr = await setupCrypto(password);
+      // Derive/unwrap the encryption key from the same password.
+      const { error: cryptoErr } = await setupCrypto(password);
       setBusy(false);
-      if (cryptoErr) setErr(cryptoErr);
+      if (cryptoErr) {
+        endAuth();
+        setErr(cryptoErr);
+      }
       return;
     }
 
@@ -42,6 +47,7 @@ export function AuthScreen() {
     const signUpErr = await signUp(email, password, name);
     if (signUpErr) {
       setBusy(false);
+      endAuth();
       setErr(signUpErr);
       return;
     }
@@ -49,14 +55,18 @@ export function AuthScreen() {
     if (!data.session) {
       // Confirmation is on — no session yet.
       setBusy(false);
+      endAuth();
       setMsg("Account created! Please confirm your email from your inbox, then sign in.");
       return;
     }
-    // Set up end-to-end encryption for the new account.
-    const cryptoErr = await setupCrypto(password);
+    // Set up end-to-end encryption + recovery key for the new account.
+    const { error: cryptoErr } = await setupCrypto(password);
     setBusy(false);
-    if (cryptoErr) setErr(cryptoErr);
-    // Otherwise the auth listener swaps in the dashboard automatically.
+    if (cryptoErr) {
+      endAuth();
+      setErr(cryptoErr);
+    }
+    // Otherwise the recovery-key screen (then the dashboard) shows automatically.
   };
 
   return (
