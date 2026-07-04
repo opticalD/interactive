@@ -7,6 +7,7 @@ A trio of pretty, interactive web apps built with **Vite + React + TypeScript + 
 | 🌸 **Bloom** — Habit & Mood tracker | [`habit-mood-tracker/`](habit-mood-tracker) | Mood heatmap, animated Recharts, streak confetti, localStorage persistence |
 | 🎧 **Pulse** — Music visualizer | [`music-visualizer/`](music-visualizer) | Web Audio API FFT → radial spectrum + bass-reactive particles |
 | ✨ **My Story** — Interactive resume | [`interactive-resume/`](interactive-resume) | Scroll-driven narrative, parallax hero, animated timeline |
+| 🧗 **Ascend** — DevOps/SRE learning roadmap | [`learning-roadmap/`](learning-roadmap) | Interactive curriculum tracker: mark To-do / Learning / Need help / Done, notes, progress, export |
 
 ## Run any app locally
 
@@ -16,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Dev ports: Bloom `5171`, Pulse `5172`, My Story `5173`.
+Dev ports: Bloom `5171`, Pulse `5172`, My Story `5173`, Ascend `5174`.
 
 ## Build
 

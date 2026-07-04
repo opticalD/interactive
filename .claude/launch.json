@@ -18,6 +18,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "interactive-resume", "run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "learning-roadmap",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "learning-roadmap", "run", "dev"],
+      "port": 5174
     }
   ]
 }
