@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../auth/AuthProvider";
+import { InfoButton } from "./InfoButton";
 
 export function AuthScreen() {
   const { signIn, signUp } = useAuth();
@@ -115,9 +116,12 @@ export function AuthScreen() {
             {busy ? "…" : mode === "in" ? "Sign in" : "Create account"}
           </button>
         </form>
-        <p className="mt-4 text-center text-xs text-white/30">
-          Each account tracks its own private mood & habit history.
-        </p>
+        <div className="mt-4 flex flex-col items-center gap-3">
+          <InfoButton label="New here? Learn the terms" />
+          <p className="text-center text-xs text-white/30">
+            Each account tracks its own private mood & habit history.
+          </p>
+        </div>
       </motion.div>
     </div>
   );

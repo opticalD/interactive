@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import { useData } from "./hooks/useData";
 import { AuthScreen } from "./components/AuthScreen";
+import { InfoButton } from "./components/InfoButton";
 import { CheckInPanel } from "./components/CheckInPanel";
 import { HabitsPanel } from "./components/HabitsPanel";
 import { Analytics } from "./components/Analytics";
@@ -29,12 +30,15 @@ function Dashboard() {
             {format(new Date(), "EEEE, MMMM d")} · welcome back, {name}
           </p>
         </div>
-        <button
-          onClick={signOut}
-          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
-        >
-          Sign out
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <InfoButton />
+          <button
+            onClick={signOut}
+            className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
+          >
+            Sign out
+          </button>
+        </div>
       </motion.header>
 
       {data.loading ? (
