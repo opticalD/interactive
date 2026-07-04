@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
   DEFAULT_FACTORS,
@@ -32,6 +32,9 @@ export function useData(userId: string | undefined): TrackerData {
   const [factors, setFactors] = useState<TrackedFactor[]>([]);
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  // Guards against a race (e.g. React StrictMode's double effect invocation)
+  // seeding the default habits/factors twice for a brand-new account.
+  const seeding = useRef(false);
 
   const reload = useCallback(async () => {
     if (!userId) return;
@@ -45,8 +48,9 @@ export function useData(userId: string | undefined): TrackerData {
     let hab = (h.data as Habit[]) ?? [];
     let fac = (f.data as TrackedFactor[]) ?? [];
 
-    // First-run seeding for a brand-new account.
-    if (hab.length === 0 && fac.length === 0) {
+    // First-run seeding for a brand-new account (guarded against double-run).
+    if (hab.length === 0 && fac.length === 0 && !seeding.current) {
+      seeding.current = true;
       await supabase.from("habits").insert(DEFAULT_HABITS);
       await supabase.from("tracked_factors").insert(DEFAULT_FACTORS);
       const [h2, f2] = await Promise.all([

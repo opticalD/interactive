@@ -37,7 +37,11 @@ export function MoodPad({ valence, arousal, onChange, size = 260 }: Props) {
         ref={ref}
         onPointerDown={(e) => {
           dragging.current = true;
-          (e.target as HTMLElement).setPointerCapture(e.pointerId);
+          try {
+            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+          } catch {
+            /* pointer capture is best-effort; never block the mood update */
+          }
           update(e.clientX, e.clientY);
         }}
         onPointerMove={(e) => dragging.current && update(e.clientX, e.clientY)}
