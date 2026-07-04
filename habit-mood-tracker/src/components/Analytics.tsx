@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import { classify, valenceColor } from "../lib/moods";
-import { mean, pearson, strength } from "../lib/stats";
+import { mean, pearson } from "../lib/stats";
 import type { TrackerData } from "../hooks/useData";
 
 function dayKey(iso: string) {
@@ -205,45 +205,38 @@ export function Analytics({ data }: { data: TrackerData }) {
             </Panel>
           </div>
 
-          {/* Correlations */}
-          <Panel title="What moves your mood? (factor ↔ valence correlation)">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {correlations.length === 0 && (
-                <p className="text-xs text-white/40">Log a few more days to reveal correlations.</p>
-              )}
-              {correlations.map(({ f, r, n }) => {
-                const rr = r!;
-                const positive = rr >= 0;
+          {/* Mood drivers */}
+          <Panel title="What lifts and lowers your mood">
+            <p className="-mt-1 mb-4 text-xs leading-relaxed text-white/45">
+              Patterns Bloom noticed between your factors and how pleasant your days feel. These are
+              associations, not proof of cause — and they get sharper the more you log.
+            </p>
+            {correlations.length === 0 ? (
+              <p className="text-xs text-white/40">
+                Log a handful of check-ins and your mood drivers will appear here.
+              </p>
+            ) : (
+              (() => {
+                const lifts = correlations.filter((c) => (c.r ?? 0) >= 0.1);
+                const weighs = correlations.filter((c) => (c.r ?? 0) <= -0.1);
+                const neutral = correlations.filter((c) => Math.abs(c.r ?? 0) < 0.1);
                 return (
-                  <div key={f.id} className="rounded-xl border border-white/10 bg-black/20 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-white/80">
-                        {f.emoji} {f.label}
-                      </span>
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: positive ? "#22c55e" : "#ef4444" }}
-                      >
-                        {positive ? "+" : ""}
-                        {rr.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${Math.abs(rr) * 100}%`,
-                          background: positive ? "#22c55e" : "#ef4444",
-                        }}
-                      />
-                    </div>
-                    <p className="mt-1.5 text-[11px] text-white/45">
-                      {strength(rr)} {positive ? "positive" : "negative"} link · n={n}
-                    </p>
+                  <div className="space-y-5">
+                    {lifts.length > 0 && (
+                      <CorrelationGroup title="Lifts your mood" emoji="☀️" tint="#22c55e" items={lifts} />
+                    )}
+                    {weighs.length > 0 && (
+                      <CorrelationGroup title="Weighs on your mood" emoji="🌧️" tint="#ef4444" items={weighs} />
+                    )}
+                    {neutral.length > 0 && (
+                      <p className="text-[11px] text-white/35">
+                        No clear link yet: {neutral.map((c) => c.f.label).join(", ")}.
+                      </p>
+                    )}
                   </div>
                 );
-              })}
-            </div>
+              })()
+            )}
           </Panel>
 
           <div className="grid gap-6 md:grid-cols-[1.3fr_1fr]">
@@ -305,6 +298,83 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
       <h3 className="mb-3 text-sm font-semibold tracking-wide text-white/80">{title}</h3>
       {children}
+    </div>
+  );
+}
+
+interface Corr {
+  f: { id: string; emoji: string; label: string };
+  r: number | null;
+  n: number;
+}
+
+/** How much to trust a correlation, based on how many check-ins fed it. */
+function reliability(n: number): { text: string; color: string } {
+  if (n < 8) return { text: "Early hint — keep logging", color: "#eab308" };
+  if (n < 20) return { text: "Emerging pattern", color: "#06b6d4" };
+  return { text: "Reliable pattern", color: "#22c55e" };
+}
+
+function CorrelationGroup({
+  title,
+  emoji,
+  tint,
+  items,
+}: {
+  title: string;
+  emoji: string;
+  tint: string;
+  items: Corr[];
+}) {
+  return (
+    <div>
+      <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold" style={{ color: tint }}>
+        <span>{emoji}</span> {title}
+      </h4>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((it) => (
+          <CorrelationCard key={it.f.id} {...it} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CorrelationCard({ f, r, n }: Corr) {
+  const rr = r ?? 0;
+  const positive = rr >= 0;
+  const color = positive ? "#22c55e" : "#ef4444";
+  const factor = f.label.toLowerCase();
+  const sentence = positive
+    ? `On days with more ${factor}, you tend to feel better.`
+    : `On days with more ${factor}, you tend to feel worse.`;
+  const rel = reliability(n);
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 p-3.5">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-sm text-white/85">
+          <span>{f.emoji}</span> {f.label}
+        </span>
+        <span
+          className="text-xs font-medium tabular-nums text-white/30"
+          title="Correlation score, −1 to +1 (how strongly this moves with your mood)"
+        >
+          {positive ? "+" : ""}
+          {rr.toFixed(2)}
+        </span>
+      </div>
+      <p className="mt-1.5 text-xs leading-relaxed text-white/65">{sentence}</p>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${Math.min(Math.abs(rr) * 100, 100)}%`, background: color }}
+        />
+      </div>
+      <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/45">
+        <span className="h-1.5 w-1.5 rounded-full" style={{ background: rel.color }} />
+        {rel.text} · {n} check-ins
+      </p>
     </div>
   );
 }
