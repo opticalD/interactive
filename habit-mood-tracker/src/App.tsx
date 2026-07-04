@@ -7,11 +7,14 @@ import { InfoButton } from "./components/InfoButton";
 import { CheckInPanel } from "./components/CheckInPanel";
 import { HabitsPanel } from "./components/HabitsPanel";
 import { Analytics } from "./components/Analytics";
+import { WellnessPanel } from "./components/WellnessPanel";
+import { useWellness } from "./hooks/useWellness";
 
 function Dashboard() {
   const { session, signOut } = useAuth();
   const user = session!.user;
   const data = useData(user.id);
+  const wellness = useWellness(user.id);
   const today = format(new Date(), "yyyy-MM-dd");
   const name = (user.user_metadata?.display_name as string) || user.email?.split("@")[0] || "there";
 
@@ -50,6 +53,12 @@ function Dashboard() {
             <HabitsPanel data={data} today={today} />
           </div>
           <Analytics data={data} />
+        </div>
+      )}
+
+      {!data.loading && (
+        <div className="mt-6">
+          <WellnessPanel data={wellness} today={today} />
         </div>
       )}
 

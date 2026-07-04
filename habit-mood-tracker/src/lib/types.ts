@@ -41,6 +41,59 @@ export interface MoodEntry {
   note: string | null;
 }
 
+export type WellnessKind = "supplement" | "skincare";
+
+export interface WellnessItem {
+  id: string;
+  user_id: string;
+  kind: WellnessKind;
+  name: string;
+  emoji: string;
+  dose: string | null;
+  schedule: string | null;
+  brand: string | null;
+  notes: string | null;
+  color: string;
+  sort_order: number;
+  archived: boolean;
+  created_at: string;
+}
+
+export interface WellnessLog {
+  id: string;
+  item_id: string;
+  date: string;
+}
+
+export const SCHEDULES = ["AM", "PM", "Both", "With food", "As needed"] as const;
+
+/** One-tap starter suggestions so the tracker never feels empty. */
+export const WELLNESS_SUGGESTIONS: Record<
+  WellnessKind,
+  { name: string; emoji: string; dose?: string; schedule?: string; color: string }[]
+> = {
+  supplement: [
+    { name: "Vitamin D3", emoji: "☀️", dose: "1000 IU", schedule: "With food", color: "#f59e0b" },
+    { name: "Omega-3", emoji: "🐟", dose: "1000 mg", schedule: "With food", color: "#06b6d4" },
+    { name: "Magnesium", emoji: "🌙", dose: "300 mg", schedule: "PM", color: "#a855f7" },
+    { name: "Multivitamin", emoji: "💊", schedule: "AM", color: "#22c55e" },
+    { name: "Creatine", emoji: "💪", dose: "5 g", schedule: "AM", color: "#ef4444" },
+    { name: "Vitamin B12", emoji: "⚡", dose: "500 mcg", schedule: "AM", color: "#eab308" },
+    { name: "Zinc", emoji: "🛡️", dose: "15 mg", schedule: "With food", color: "#14b8a6" },
+    { name: "Probiotic", emoji: "🦠", schedule: "AM", color: "#ec4899" },
+  ],
+  skincare: [
+    { name: "Cleanser", emoji: "🧼", schedule: "Both", color: "#06b6d4" },
+    { name: "Moisturizer", emoji: "💧", schedule: "Both", color: "#3b82f6" },
+    { name: "Sunscreen SPF", emoji: "🧴", schedule: "AM", color: "#f59e0b" },
+    { name: "Vitamin C serum", emoji: "🍊", schedule: "AM", color: "#eab308" },
+    { name: "Retinol", emoji: "🌛", schedule: "PM", color: "#a855f7" },
+    { name: "Niacinamide", emoji: "✨", schedule: "Both", color: "#22c55e" },
+    { name: "Hyaluronic acid", emoji: "💦", schedule: "Both", color: "#0ea5e9" },
+    { name: "Face mask", emoji: "🎭", schedule: "As needed", color: "#ec4899" },
+  ],
+};
+
 /** Sensible starting factors seeded for brand-new users. */
 export const DEFAULT_FACTORS: Omit<TrackedFactor, "id" | "user_id">[] = [
   { key: "sleep", label: "Sleep", emoji: "😴", kind: "hours", min: 0, max: 12, sort_order: 0 },
