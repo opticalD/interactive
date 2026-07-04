@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "habit-mood-tracker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "habit-mood-tracker", "run", "dev"],
+      "port": 5171
+    },
+    {
+      "name": "music-visualizer",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "music-visualizer", "run", "dev"],
+      "port": 5172
+    },
+    {
+      "name": "interactive-resume",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "interactive-resume", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}
