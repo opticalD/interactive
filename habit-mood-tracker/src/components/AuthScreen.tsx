@@ -121,6 +121,16 @@ export function AuthScreen() {
             className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
           />
 
+          {mode === "up" && (
+            <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/[0.06] p-3 text-xs leading-relaxed text-cyan-100/80">
+              <span className="font-semibold text-cyan-200">🔒 Your entries are end-to-end encrypted</span>{" "}
+              with your password — your mood details and notes are unreadable to anyone but you, even
+              us. The trade-off: if you <span className="font-semibold">forget your password, those
+              encrypted entries can't be recovered</span> (there's no reset for them). Please use a
+              password you'll remember.
+            </div>
+          )}
+
           {err && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300">{err}</p>}
           {msg && (
             <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">{msg}</p>
