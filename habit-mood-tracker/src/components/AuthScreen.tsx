@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../auth/AuthProvider";
+import { supabase } from "../lib/supabase";
 import { InfoButton } from "./InfoButton";
 
 export function AuthScreen() {
@@ -25,20 +26,23 @@ export function AuthScreen() {
       return;
     }
 
-    // Sign up, then try to sign in straight away. If the project requires email
-    // confirmation, the sign-in will report it and we prompt the user to confirm.
+    // Create the account. When email confirmation is OFF, signUp already
+    // establishes a session — we do NOT call signIn again, because a second
+    // auth would churn the token while the dashboard is loading and race the
+    // first data fetch (seeded factors would come back empty until a refresh).
     const signUpErr = await signUp(email, password, name);
     if (signUpErr) {
       setBusy(false);
       setErr(signUpErr);
       return;
     }
-    const signInErr = await signIn(email, password);
+    const { data } = await supabase.auth.getSession();
     setBusy(false);
-    if (signInErr) {
+    if (!data.session) {
+      // Confirmation is on — no session yet.
       setMsg("Account created! Please confirm your email from your inbox, then sign in.");
     }
-    // On success the auth listener swaps in the dashboard automatically.
+    // Otherwise the auth listener swaps in the dashboard automatically.
   };
 
   return (

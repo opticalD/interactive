@@ -51,14 +51,20 @@ export function useData(userId: string | undefined): TrackerData {
     // First-run seeding for a brand-new account (guarded against double-run).
     if (hab.length === 0 && fac.length === 0 && !seeding.current) {
       seeding.current = true;
-      await supabase.from("habits").insert(DEFAULT_HABITS);
-      await supabase.from("tracked_factors").insert(DEFAULT_FACTORS);
-      const [h2, f2] = await Promise.all([
-        supabase.from("habits").select("*").eq("archived", false).order("sort_order"),
-        supabase.from("tracked_factors").select("*").order("sort_order"),
-      ]);
-      hab = (h2.data as Habit[]) ?? [];
-      fac = (f2.data as TrackedFactor[]) ?? [];
+      const { error: he } = await supabase.from("habits").insert(DEFAULT_HABITS);
+      const { error: fe } = await supabase.from("tracked_factors").insert(DEFAULT_FACTORS);
+      if (he || fe) {
+        // Seeding failed (e.g. auth still settling right after signup) — release
+        // the guard so the next reload can retry cleanly instead of getting stuck.
+        seeding.current = false;
+      } else {
+        const [h2, f2] = await Promise.all([
+          supabase.from("habits").select("*").eq("archived", false).order("sort_order"),
+          supabase.from("tracked_factors").select("*").order("sort_order"),
+        ]);
+        hab = (h2.data as Habit[]) ?? [];
+        fac = (f2.data as TrackedFactor[]) ?? [];
+      }
     }
 
     setHabits(hab);
@@ -70,6 +76,12 @@ export function useData(userId: string | undefined): TrackerData {
 
   useEffect(() => {
     void reload();
+    // Safety net: if the very first load raced auth setup, reload once the
+    // session is confirmed so seeded factors/habits appear without a refresh.
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") void reload();
+    });
+    return () => sub.subscription.unsubscribe();
   }, [reload]);
 
   const toggleHabit = useCallback(
