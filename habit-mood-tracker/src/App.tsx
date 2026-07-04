@@ -1,13 +1,18 @@
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { useTracker } from "./store";
-import { StatCards } from "./components/StatCards";
-import { MoodHeatmap } from "./components/MoodHeatmap";
-import { TodayPanel } from "./components/TodayPanel";
-import { HabitBars, MoodTrend } from "./components/Charts";
+import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { useData } from "./hooks/useData";
+import { AuthScreen } from "./components/AuthScreen";
+import { CheckInPanel } from "./components/CheckInPanel";
+import { HabitsPanel } from "./components/HabitsPanel";
+import { Analytics } from "./components/Analytics";
 
-export default function App() {
-  const { data, today, setMood, toggleHabit, reset } = useTracker();
+function Dashboard() {
+  const { session, signOut } = useAuth();
+  const user = session!.user;
+  const data = useData(user.id);
+  const today = format(new Date(), "yyyy-MM-dd");
+  const name = (user.user_metadata?.display_name as string) || user.email?.split("@")[0] || "there";
 
   return (
     <div className="mx-auto min-h-full max-w-6xl px-5 py-10">
@@ -21,37 +26,48 @@ export default function App() {
             Bloom
           </h1>
           <p className="mt-1 text-sm text-white/50">
-            {format(new Date(), "EEEE, MMMM d")} · track your habits & mood
+            {format(new Date(), "EEEE, MMMM d")} · welcome back, {name}
           </p>
         </div>
         <button
-          onClick={reset}
+          onClick={signOut}
           className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
         >
-          Reset demo data
+          Sign out
         </button>
       </motion.header>
 
-      <div className="mb-6">
-        <StatCards data={data} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <div className="space-y-6">
-          <TodayPanel data={data} today={today} onMood={setMood} onToggle={toggleHabit} />
-        </div>
-        <div className="space-y-6">
-          <MoodHeatmap data={data} />
-          <div className="grid gap-6 md:grid-cols-2">
-            <MoodTrend data={data} />
-            <HabitBars data={data} />
+      {data.loading ? (
+        <div className="py-24 text-center text-sm text-white/40">Loading your data…</div>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(320px,0.85fr)_1.4fr]">
+          <div className="space-y-6">
+            <CheckInPanel factors={data.factors} onSave={data.addEntry} />
+            <HabitsPanel data={data} today={today} />
           </div>
+          <Analytics data={data} />
         </div>
-      </div>
+      )}
 
       <footer className="mt-10 text-center text-xs text-white/30">
-        Data is stored locally in your browser · built with React, Tailwind, Framer Motion & Recharts
+        Valence–arousal circumplex model · your data is private to your account · React · Supabase · Recharts
       </footer>
     </div>
+  );
+}
+
+function Gate() {
+  const { session, loading } = useAuth();
+  if (loading) return <div className="py-24 text-center text-sm text-white/40">Loading…</div>;
+  return session ? <Dashboard /> : <AuthScreen />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <div className="min-h-full">
+        <Gate />
+      </div>
+    </AuthProvider>
   );
 }
