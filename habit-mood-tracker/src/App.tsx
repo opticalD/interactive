@@ -73,7 +73,7 @@ function Dashboard() {
             <CheckInPanel factors={data.factors} onSave={data.addEntry} />
             <HabitsPanel data={data} today={today} />
           </div>
-          <Analytics data={data} />
+          <Analytics data={data} wellness={wellness} />
         </div>
       )}
 

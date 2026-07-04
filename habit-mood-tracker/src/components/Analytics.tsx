@@ -18,12 +18,14 @@ import { motion } from "framer-motion";
 import { classify, valenceColor } from "../lib/moods";
 import { mean, pearson } from "../lib/stats";
 import type { TrackerData } from "../hooks/useData";
+import type { WellnessData } from "../hooks/useWellness";
+import type { WellnessItem } from "../lib/types";
 
 function dayKey(iso: string) {
   return format(parseISO(iso), "yyyy-MM-dd");
 }
 
-export function Analytics({ data }: { data: TrackerData }) {
+export function Analytics({ data, wellness }: { data: TrackerData; wellness: WellnessData }) {
   const { entries, factors, habits, logs } = data;
 
   const stats = useMemo(() => {
@@ -97,6 +99,36 @@ export function Analytics({ data }: { data: TrackerData }) {
     for (const l of logs) if (l.date >= cutoff) counts[l.habit_id] = (counts[l.habit_id] ?? 0) + 1;
     return habits.map((h) => ({ h, count: counts[h.id] ?? 0 }));
   }, [logs, habits]);
+
+  // Correlate "did I take/use this item on a day" (1/0) with that day's mood.
+  const wellnessCorr = useMemo(() => {
+    const byDay = new Map<string, number[]>();
+    for (const e of entries) {
+      const k = dayKey(e.logged_at);
+      if (!byDay.has(k)) byDay.set(k, []);
+      byDay.get(k)!.push(e.valence);
+    }
+    const dayAvg = new Map<string, number>();
+    for (const [d, vs] of byDay) dayAvg.set(d, mean(vs));
+    const days = [...dayAvg.keys()];
+    const doneSet = new Set(wellness.logs.map((l) => `${l.item_id}|${l.date}`));
+
+    return wellness.items
+      .map((item) => {
+        const xs: number[] = [];
+        const ys: number[] = [];
+        let doneDays = 0;
+        for (const day of days) {
+          const done = doneSet.has(`${item.id}|${day}`) ? 1 : 0;
+          doneDays += done;
+          xs.push(done);
+          ys.push(dayAvg.get(day)!);
+        }
+        return { item, r: pearson(xs, ys), n: xs.length, doneDays };
+      })
+      .filter((c) => c.r !== null)
+      .sort((a, b) => Math.abs(b.r!) - Math.abs(a.r!));
+  }, [entries, wellness.items, wellness.logs]);
 
   const heatmap = useMemo(() => {
     const byDay = new Map<string, number[]>();
@@ -239,6 +271,28 @@ export function Analytics({ data }: { data: TrackerData }) {
             )}
           </Panel>
 
+          {/* Wellness routine × mood */}
+          {wellness.items.length > 0 && (
+            <Panel title="Does your routine move your mood?">
+              <p className="-mt-1 mb-4 text-xs leading-relaxed text-white/45">
+                How taking a supplement or doing a skincare step tracks with your mood that day.
+                Keep logging both on the same days to sharpen it.
+              </p>
+              {wellnessCorr.length === 0 ? (
+                <p className="text-xs text-white/40">
+                  Log your supplements/skincare and a few moods on the same days, and the patterns
+                  will appear here.
+                </p>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {wellnessCorr.map((c) => (
+                    <WellnessCorrelationCard key={c.item.id} {...c} />
+                  ))}
+                </div>
+              )}
+            </Panel>
+          )}
+
           <div className="grid gap-6 md:grid-cols-[1.3fr_1fr]">
             {/* Heatmap */}
             <Panel title="Valence heatmap · 14 weeks">
@@ -374,6 +428,55 @@ function CorrelationCard({ f, r, n }: Corr) {
       <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/45">
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: rel.color }} />
         {rel.text} · {n} check-ins
+      </p>
+    </div>
+  );
+}
+
+function WellnessCorrelationCard({
+  item,
+  r,
+  n,
+  doneDays,
+}: {
+  item: WellnessItem;
+  r: number | null;
+  n: number;
+  doneDays: number;
+}) {
+  const rr = r ?? 0;
+  const positive = rr >= 0;
+  const color = positive ? "#22c55e" : "#ef4444";
+  const verb = item.kind === "supplement" ? "take" : "use";
+  const feel = positive ? "better" : "worse";
+  const rel = reliability(doneDays);
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 p-3.5">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-sm text-white/85">
+          <span>{item.emoji}</span> {item.name}
+        </span>
+        <span
+          className="text-xs font-medium tabular-nums text-white/30"
+          title="Correlation score, −1 to +1"
+        >
+          {positive ? "+" : ""}
+          {rr.toFixed(2)}
+        </span>
+      </div>
+      <p className="mt-1.5 text-xs leading-relaxed text-white/65">
+        On days you {verb} {item.name.toLowerCase()}, you tend to feel {feel}.
+      </p>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${Math.min(Math.abs(rr) * 100, 100)}%`, background: color }}
+        />
+      </div>
+      <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/45">
+        <span className="h-1.5 w-1.5 rounded-full" style={{ background: rel.color }} />
+        {rel.text} · {doneDays}/{n} days
       </p>
     </div>
   );
