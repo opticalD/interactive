@@ -50,6 +50,34 @@ export function Hero() {
         >
           {profile.tagline}
         </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs text-white/60"
+        >
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
+            📍 {profile.location}
+          </span>
+          <a
+            href={`mailto:${profile.email}`}
+            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-colors hover:bg-white/10"
+          >
+            ✉️ {profile.email}
+          </a>
+          {profile.links.map((l) => (
+            <a
+              key={l.label}
+              href={l.href}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-colors hover:bg-white/10"
+            >
+              {l.label}
+            </a>
+          ))}
+        </motion.div>
       </motion.div>
 
       <motion.div

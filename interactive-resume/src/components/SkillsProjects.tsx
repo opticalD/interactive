@@ -1,24 +1,38 @@
 import { motion } from "framer-motion";
-import { projects, skills } from "../content";
+import { projects, skillGroups } from "../content";
 import { SectionLabel } from "./StoryChapters";
 
 export function Skills() {
   return (
-    <section className="mx-auto max-w-4xl px-6 py-20">
-      <SectionLabel>What I work with</SectionLabel>
-      <div className="mt-10 flex flex-wrap justify-center gap-3">
-        {skills.map((s, i) => (
-          <motion.span
-            key={s}
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.04 }}
-            whileHover={{ scale: 1.08, y: -2 }}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/75"
+    <section className="mx-auto max-w-5xl px-6 py-20">
+      <SectionLabel>Toolbox</SectionLabel>
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {skillGroups.map((g, i) => (
+          <motion.div
+            key={g.label}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ delay: i * 0.05 }}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur"
           >
-            {s}
-          </motion.span>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-lg">{g.emoji}</span>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                {g.label}
+              </h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {g.items.map((s) => (
+                <span
+                  key={s}
+                  className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs text-white/80"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          </motion.div>
         ))}
       </div>
     </section>
