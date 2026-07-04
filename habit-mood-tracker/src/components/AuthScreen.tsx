@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../auth/AuthProvider";
+import { useCrypto } from "../auth/CryptoProvider";
 import { supabase } from "../lib/supabase";
 import { InfoButton } from "./InfoButton";
 
 export function AuthScreen() {
   const { signIn, signUp } = useAuth();
+  const { setup: setupCrypto } = useCrypto();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,8 +23,15 @@ export function AuthScreen() {
     setBusy(true);
     if (mode === "in") {
       const error = await signIn(email, password);
+      if (error) {
+        setBusy(false);
+        setErr(error);
+        return;
+      }
+      // Derive the encryption key from the same password.
+      const cryptoErr = await setupCrypto(password);
       setBusy(false);
-      if (error) setErr(error);
+      if (cryptoErr) setErr(cryptoErr);
       return;
     }
 
@@ -37,11 +46,16 @@ export function AuthScreen() {
       return;
     }
     const { data } = await supabase.auth.getSession();
-    setBusy(false);
     if (!data.session) {
       // Confirmation is on — no session yet.
+      setBusy(false);
       setMsg("Account created! Please confirm your email from your inbox, then sign in.");
+      return;
     }
+    // Set up end-to-end encryption for the new account.
+    const cryptoErr = await setupCrypto(password);
+    setBusy(false);
+    if (cryptoErr) setErr(cryptoErr);
     // Otherwise the auth listener swaps in the dashboard automatically.
   };
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useCrypto } from "../auth/CryptoProvider";
 import {
   DEFAULT_FACTORS,
   DEFAULT_HABITS,
@@ -8,6 +9,15 @@ import {
   type MoodEntry,
   type TrackedFactor,
 } from "../lib/types";
+
+/** The sensitive mood fields that get encrypted into `secret`. */
+interface MoodSecret {
+  valence: number;
+  arousal: number;
+  factors: Record<string, number>;
+  tags: string[];
+  note: string | null;
+}
 
 export interface TrackerData {
   habits: Habit[];
@@ -27,6 +37,7 @@ export interface TrackerData {
 
 /** Loads and mutates the signed-in user's tracker data (RLS scopes everything). */
 export function useData(userId: string | undefined): TrackerData {
+  const { encrypt, decrypt } = useCrypto();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [logs, setLogs] = useState<HabitLog[]>([]);
   const [factors, setFactors] = useState<TrackedFactor[]>([]);
@@ -67,12 +78,61 @@ export function useData(userId: string | undefined): TrackerData {
       }
     }
 
+    // Decrypt mood entries (and migrate any legacy plaintext rows to encrypted).
+    type RawEntry = MoodEntry & { secret: string | null };
+    const rawEntries = (e.data as RawEntry[]) ?? [];
+    const decrypted: MoodEntry[] = [];
+    for (const row of rawEntries) {
+      if (row.secret) {
+        try {
+          const s = await decrypt<MoodSecret>(row.secret);
+          decrypted.push({
+            id: row.id,
+            user_id: row.user_id,
+            logged_at: row.logged_at,
+            valence: s.valence,
+            arousal: s.arousal,
+            factors: s.factors ?? {},
+            tags: s.tags ?? [],
+            note: s.note ?? null,
+          });
+        } catch {
+          /* wrong key — skip this row rather than crash */
+        }
+      } else {
+        // Legacy plaintext row: show it, then re-encrypt it in the background.
+        decrypted.push({
+          id: row.id,
+          user_id: row.user_id,
+          logged_at: row.logged_at,
+          valence: row.valence ?? 0,
+          arousal: row.arousal ?? 0,
+          factors: row.factors ?? {},
+          tags: row.tags ?? [],
+          note: row.note ?? null,
+        });
+        if (row.valence != null) {
+          const secret = await encrypt({
+            valence: row.valence,
+            arousal: row.arousal,
+            factors: row.factors ?? {},
+            tags: row.tags ?? [],
+            note: row.note ?? null,
+          } satisfies MoodSecret);
+          void supabase
+            .from("mood_entries")
+            .update({ secret, valence: null, arousal: null, factors: {}, tags: [], note: null })
+            .eq("id", row.id);
+        }
+      }
+    }
+
     setHabits(hab);
     setFactors(fac);
     setLogs((l.data as HabitLog[]) ?? []);
-    setEntries((e.data as MoodEntry[]) ?? []);
+    setEntries(decrypted);
     setLoading(false);
-  }, [userId]);
+  }, [userId, encrypt, decrypt]);
 
   useEffect(() => {
     void reload();
@@ -141,10 +201,36 @@ export function useData(userId: string | undefined): TrackerData {
 
   const addEntry = useCallback(
     async (e: Omit<MoodEntry, "id" | "user_id" | "logged_at">) => {
-      const { data } = await supabase.from("mood_entries").insert(e).select("*").single();
-      if (data) setEntries((p) => [data as MoodEntry, ...p]);
+      // Encrypt the sensitive mood payload; store only ciphertext in the DB.
+      const secret = await encrypt({
+        valence: e.valence,
+        arousal: e.arousal,
+        factors: e.factors,
+        tags: e.tags,
+        note: e.note,
+      } satisfies MoodSecret);
+      const { data } = await supabase
+        .from("mood_entries")
+        .insert({ secret, factors: {}, tags: [] })
+        .select("id,user_id,logged_at")
+        .single();
+      if (data) {
+        setEntries((p) => [
+          {
+            id: data.id,
+            user_id: data.user_id,
+            logged_at: data.logged_at,
+            valence: e.valence,
+            arousal: e.arousal,
+            factors: e.factors,
+            tags: e.tags,
+            note: e.note,
+          },
+          ...p,
+        ]);
+      }
     },
-    []
+    [encrypt]
   );
 
   return {

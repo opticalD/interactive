@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { CryptoProvider, useCrypto } from "./auth/CryptoProvider";
 import { useData } from "./hooks/useData";
 import { AuthScreen } from "./components/AuthScreen";
+import { UnlockScreen } from "./components/UnlockScreen";
 import { InfoButton } from "./components/InfoButton";
 import { Onboarding, onboardingKey } from "./components/Onboarding";
 import { CheckInPanel } from "./components/CheckInPanel";
@@ -93,16 +95,24 @@ function Dashboard() {
 
 function Gate() {
   const { session, loading } = useAuth();
-  if (loading) return <div className="py-24 text-center text-sm text-white/40">Loading…</div>;
-  return session ? <Dashboard /> : <AuthScreen />;
+  const crypto = useCrypto();
+  const Loading = <div className="py-24 text-center text-sm text-white/40">Loading…</div>;
+
+  if (loading || (session && !crypto.ready)) return Loading;
+  if (!session) return <AuthScreen />;
+  if (crypto.busy) return Loading; // deriving the key during login
+  if (!crypto.hasKey) return <UnlockScreen />;
+  return <Dashboard />;
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <div className="min-h-full">
-        <Gate />
-      </div>
+      <CryptoProvider>
+        <div className="min-h-full">
+          <Gate />
+        </div>
+      </CryptoProvider>
     </AuthProvider>
   );
 }

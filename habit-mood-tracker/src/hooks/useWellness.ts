@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useCrypto } from "../auth/CryptoProvider";
 import type { WellnessItem, WellnessLog } from "../lib/types";
+
+type RawItem = WellnessItem & { secret: string | null };
+interface NoteSecret {
+  notes: string | null;
+}
 
 export interface WellnessData {
   items: WellnessItem[];
@@ -17,6 +23,7 @@ export interface WellnessData {
 
 /** Loads and mutates the signed-in user's supplements & skincare (RLS-scoped). */
 export function useWellness(userId: string | undefined): WellnessData {
+  const { encrypt, decrypt } = useCrypto();
   const [items, setItems] = useState<WellnessItem[]>([]);
   const [logs, setLogs] = useState<WellnessLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +35,29 @@ export function useWellness(userId: string | undefined): WellnessData {
       supabase.from("wellness_items").select("*").eq("archived", false).order("sort_order"),
       supabase.from("wellness_logs").select("id,item_id,date"),
     ]);
-    setItems((i.data as WellnessItem[]) ?? []);
+    const raw = (i.data as RawItem[]) ?? [];
+    const decrypted: WellnessItem[] = await Promise.all(
+      raw.map(async ({ secret, ...base }) => {
+        if (secret) {
+          try {
+            const s = await decrypt<NoteSecret>(secret);
+            return { ...base, notes: s.notes ?? null };
+          } catch {
+            return { ...base, notes: null };
+          }
+        }
+        // Legacy plaintext note: re-encrypt it in the background.
+        if (base.notes) {
+          const sec = await encrypt({ notes: base.notes } satisfies NoteSecret);
+          void supabase.from("wellness_items").update({ notes: null, secret: sec }).eq("id", base.id);
+        }
+        return base;
+      })
+    );
+    setItems(decrypted);
     setLogs((l.data as WellnessLog[]) ?? []);
     setLoading(false);
-  }, [userId]);
+  }, [userId, encrypt, decrypt]);
 
   useEffect(() => {
     void reload();
@@ -60,16 +86,28 @@ export function useWellness(userId: string | undefined): WellnessData {
   const addItem = useCallback<WellnessData["addItem"]>(
     async (item) => {
       const sort_order = items.filter((x) => x.kind === item.kind).length;
-      await supabase.from("wellness_items").insert({ ...item, sort_order });
+      const { notes, ...rest } = item;
+      const secret = notes ? await encrypt({ notes } satisfies NoteSecret) : null;
+      await supabase.from("wellness_items").insert({ ...rest, notes: null, secret, sort_order });
       await reload();
     },
-    [items, reload]
+    [items, reload, encrypt]
   );
 
-  const updateItem = useCallback(async (id: string, patch: Partial<WellnessItem>) => {
-    setItems((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-    await supabase.from("wellness_items").update(patch).eq("id", id);
-  }, []);
+  const updateItem = useCallback(
+    async (id: string, patch: Partial<WellnessItem>) => {
+      setItems((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+      if ("notes" in patch) {
+        // Encrypt the note; never store it in the clear.
+        const { notes, ...rest } = patch;
+        const secret = notes ? await encrypt({ notes } satisfies NoteSecret) : null;
+        await supabase.from("wellness_items").update({ ...rest, notes: null, secret }).eq("id", id);
+      } else {
+        await supabase.from("wellness_items").update(patch).eq("id", id);
+      }
+    },
+    [encrypt]
+  );
 
   const deleteItem = useCallback(async (id: string) => {
     setItems((p) => p.filter((x) => x.id !== id));
