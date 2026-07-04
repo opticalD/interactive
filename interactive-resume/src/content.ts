@@ -25,7 +25,7 @@ export interface Metric {
 }
 
 export const metrics: Metric[] = [
-  { value: "15+", label: "Production services owned on Kubernetes", accent: "#06b6d4" },
+  { value: "40+", label: "Production services owned on Kubernetes", accent: "#06b6d4" },
   { value: "99.9%", label: "Deployment success rate", accent: "#22c55e" },
   { value: "−35%", label: "Mean Time to Resolution (MTTR)", accent: "#a855f7" },
   { value: "+50%", label: "Deployment & setup efficiency", accent: "#f59e0b" },
@@ -64,7 +64,7 @@ export const chapters: Chapter[] = [
   {
     year: "Now",
     title: "Reliability at scale",
-    body: "Operating 15+ production services across Kubernetes clusters, running zero-downtime GitOps CI/CD at a 99.9% success rate, and cutting MTTR by 35%. Recognised with a Spot Award for backend platform reliability.",
+    body: "Operating 40+ production services across Kubernetes clusters, running zero-downtime GitOps CI/CD at a 99.9% success rate, and cutting MTTR by 35%. Recognised with a Spot Award for backend platform reliability.",
     emoji: "⚡",
     accent: "#f59e0b",
   },
