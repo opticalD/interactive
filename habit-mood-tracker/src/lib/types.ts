@@ -41,6 +41,69 @@ export interface MoodEntry {
   note: string | null;
 }
 
+// ── Illness / health log ────────────────────────────────────────────
+export interface Medicine {
+  name: string;
+  dose?: string;
+}
+
+export interface HealthEvent {
+  id: string;
+  started_on: string; // yyyy-MM-dd
+  ended_on: string | null;
+  condition: string;
+  severity: number; // 1..5
+  symptoms: string[];
+  medicines: Medicine[];
+  notes: string | null;
+}
+
+export const SYMPTOM_OPTIONS = [
+  "Fever",
+  "Cough",
+  "Headache",
+  "Sore throat",
+  "Runny nose",
+  "Body ache",
+  "Fatigue",
+  "Nausea",
+  "Stomach ache",
+  "Dizziness",
+  "Chills",
+  "Congestion",
+] as const;
+
+// ── Menstrual cycle ─────────────────────────────────────────────────
+export type Flow = "spotting" | "light" | "medium" | "heavy";
+export const FLOW_OPTIONS: { key: Flow; label: string; dots: number }[] = [
+  { key: "spotting", label: "Spotting", dots: 1 },
+  { key: "light", label: "Light", dots: 2 },
+  { key: "medium", label: "Medium", dots: 3 },
+  { key: "heavy", label: "Heavy", dots: 4 },
+];
+
+export const PERIOD_SYMPTOMS = [
+  "Cramps",
+  "Bloating",
+  "Headache",
+  "Tender breasts",
+  "Mood swings",
+  "Fatigue",
+  "Acne",
+  "Cravings",
+  "Back pain",
+  "Nausea",
+] as const;
+
+export interface PeriodLog {
+  id: string;
+  started_on: string; // yyyy-MM-dd
+  ended_on: string | null;
+  flow: Flow | null;
+  symptoms: string[];
+  notes: string | null;
+}
+
 export type WellnessKind = "supplement" | "skincare";
 
 export interface WellnessItem {

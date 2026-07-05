@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useCrypto } from "../auth/CryptoProvider";
 import {
@@ -18,6 +18,10 @@ interface MoodSecret {
   tags: string[];
   note: string | null;
 }
+
+// Module-level guard so first-run seeding can't run twice even if the Dashboard
+// remounts (e.g. while auth/encryption settle). Keyed by user id, survives remounts.
+const seedingUsers = new Set<string>();
 
 export interface TrackerData {
   habits: Habit[];
@@ -43,9 +47,6 @@ export function useData(userId: string | undefined): TrackerData {
   const [factors, setFactors] = useState<TrackedFactor[]>([]);
   const [entries, setEntries] = useState<MoodEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  // Guards against a race (e.g. React StrictMode's double effect invocation)
-  // seeding the default habits/factors twice for a brand-new account.
-  const seeding = useRef(false);
 
   const reload = useCallback(async () => {
     if (!userId) return;
@@ -59,15 +60,16 @@ export function useData(userId: string | undefined): TrackerData {
     let hab = (h.data as Habit[]) ?? [];
     let fac = (f.data as TrackedFactor[]) ?? [];
 
-    // First-run seeding for a brand-new account (guarded against double-run).
-    if (hab.length === 0 && fac.length === 0 && !seeding.current) {
-      seeding.current = true;
+    // First-run seeding for a brand-new account (guarded against double-run
+    // across remounts via a module-level, user-keyed guard).
+    if (hab.length === 0 && fac.length === 0 && !seedingUsers.has(userId)) {
+      seedingUsers.add(userId);
       const { error: he } = await supabase.from("habits").insert(DEFAULT_HABITS);
       const { error: fe } = await supabase.from("tracked_factors").insert(DEFAULT_FACTORS);
       if (he || fe) {
         // Seeding failed (e.g. auth still settling right after signup) — release
         // the guard so the next reload can retry cleanly instead of getting stuck.
-        seeding.current = false;
+        seedingUsers.delete(userId);
       } else {
         const [h2, f2] = await Promise.all([
           supabase.from("habits").select("*").eq("archived", false).order("sort_order"),

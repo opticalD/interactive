@@ -17,16 +17,49 @@ import {
 import { motion } from "framer-motion";
 import { classify, valenceColor } from "../lib/moods";
 import { mean, pearson } from "../lib/stats";
+import { PHASE_META, phaseForDate, type Phase } from "../lib/cycle";
 import type { TrackerData } from "../hooks/useData";
 import type { WellnessData } from "../hooks/useWellness";
-import type { WellnessItem } from "../lib/types";
+import type { CycleData } from "../hooks/useCycle";
 
 function dayKey(iso: string) {
   return format(parseISO(iso), "yyyy-MM-dd");
 }
 
-export function Analytics({ data, wellness }: { data: TrackerData; wellness: WellnessData }) {
+interface ActivityCorr {
+  id: string;
+  emoji: string;
+  label: string;
+  kind: "habit" | "supplement" | "skincare";
+  r: number | null;
+  n: number;
+  doneDays: number;
+}
+
+export function Analytics({
+  data,
+  wellness,
+  cycle,
+}: {
+  data: TrackerData;
+  wellness: WellnessData;
+  cycle: CycleData;
+}) {
   const { entries, factors, habits, logs } = data;
+
+  // Average mood in each menstrual-cycle phase (only when cycle tracking is on).
+  const phaseMood = useMemo(() => {
+    if (!cycle.enabled || cycle.periods.length === 0) return null;
+    const buckets: Record<Phase, number[]> = { menstrual: [], follicular: [], ovulatory: [], luteal: [] };
+    for (const e of entries) {
+      const ph = phaseForDate(dayKey(e.logged_at), cycle.periods);
+      if (ph) buckets[ph].push(e.valence);
+    }
+    const rows = (Object.keys(buckets) as Phase[])
+      .map((ph) => ({ ph, n: buckets[ph].length, avg: buckets[ph].length ? Math.round(mean(buckets[ph])) : null }))
+      .filter((r) => r.n > 0);
+    return rows.length >= 2 ? rows : null;
+  }, [cycle.enabled, cycle.periods, entries]);
 
   const stats = useMemo(() => {
     const valences = entries.map((e) => e.valence);
@@ -100,8 +133,9 @@ export function Analytics({ data, wellness }: { data: TrackerData; wellness: Wel
     return habits.map((h) => ({ h, count: counts[h.id] ?? 0 }));
   }, [logs, habits]);
 
-  // Correlate "did I take/use this item on a day" (1/0) with that day's mood.
-  const wellnessCorr = useMemo(() => {
+  // Correlate "did I do this activity on a day" (1/0) with that day's mood —
+  // across habits AND wellness items (supplements/skincare).
+  const routineCorr = useMemo(() => {
     const byDay = new Map<string, number[]>();
     for (const e of entries) {
       const k = dayKey(e.logged_at);
@@ -111,24 +145,39 @@ export function Analytics({ data, wellness }: { data: TrackerData; wellness: Wel
     const dayAvg = new Map<string, number>();
     for (const [d, vs] of byDay) dayAvg.set(d, mean(vs));
     const days = [...dayAvg.keys()];
-    const doneSet = new Set(wellness.logs.map((l) => `${l.item_id}|${l.date}`));
+    const habitDone = new Set(logs.map((l) => `${l.habit_id}|${l.date}`));
+    const wellDone = new Set(wellness.logs.map((l) => `${l.item_id}|${l.date}`));
 
-    return wellness.items
-      .map((item) => {
-        const xs: number[] = [];
-        const ys: number[] = [];
-        let doneDays = 0;
-        for (const day of days) {
-          const done = doneSet.has(`${item.id}|${day}`) ? 1 : 0;
-          doneDays += done;
-          xs.push(done);
-          ys.push(dayAvg.get(day)!);
-        }
-        return { item, r: pearson(xs, ys), n: xs.length, doneDays };
-      })
-      .filter((c) => c.r !== null)
-      .sort((a, b) => Math.abs(b.r!) - Math.abs(a.r!));
-  }, [entries, wellness.items, wellness.logs]);
+    const activities: ActivityCorr[] = [];
+    const build = (id: string, emoji: string, label: string, kind: ActivityCorr["kind"], done: Set<string>) => {
+      const xs: number[] = [];
+      const ys: number[] = [];
+      let doneDays = 0;
+      for (const day of days) {
+        const d = done.has(`${id}|${day}`) ? 1 : 0;
+        doneDays += d;
+        xs.push(d);
+        ys.push(dayAvg.get(day)!);
+      }
+      activities.push({ id, emoji, label, kind, r: pearson(xs, ys), n: xs.length, doneDays });
+    };
+    for (const h of habits) build(h.id, h.emoji, h.name, "habit", habitDone);
+    for (const it of wellness.items) build(it.id, it.emoji, it.name, it.kind, wellDone);
+
+    return activities.filter((c) => c.r !== null).sort((a, b) => Math.abs(b.r!) - Math.abs(a.r!));
+  }, [entries, habits, logs, wellness.items, wellness.logs]);
+
+  // One-line insight: strongest positive & negative driver across factors + routine.
+  const insight = useMemo(() => {
+    const cands: { emoji: string; label: string; r: number; n: number }[] = [
+      ...correlations.map((c) => ({ emoji: c.f.emoji, label: c.f.label, r: c.r!, n: c.n })),
+      ...routineCorr.map((c) => ({ emoji: c.emoji, label: c.label, r: c.r!, n: c.doneDays })),
+    ].filter((c) => c.n >= 3);
+    if (cands.length === 0) return null;
+    const lift = cands.reduce((a, b) => (b.r > a.r ? b : a));
+    const drag = cands.reduce((a, b) => (b.r < a.r ? b : a));
+    return { lift: lift.r >= 0.15 ? lift : null, drag: drag.r <= -0.15 ? drag : null };
+  }, [correlations, routineCorr]);
 
   const heatmap = useMemo(() => {
     const byDay = new Map<string, number[]>();
@@ -178,6 +227,32 @@ export function Analytics({ data, wellness }: { data: TrackerData; wellness: Wel
           </motion.div>
         ))}
       </div>
+
+      {insight && (insight.lift || insight.drag) && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-gradient-to-r from-emerald-500/[0.07] to-violet-500/[0.07] p-4 sm:flex-row sm:items-center sm:gap-6"
+        >
+          <span className="text-sm font-semibold text-white/80">✨ Your patterns</span>
+          {insight.lift && (
+            <span className="text-sm text-white/70">
+              Biggest lift:{" "}
+              <span className="font-medium text-emerald-300">
+                {insight.lift.emoji} {insight.lift.label}
+              </span>
+            </span>
+          )}
+          {insight.drag && (
+            <span className="text-sm text-white/70">
+              Weighs you down:{" "}
+              <span className="font-medium text-red-300">
+                {insight.drag.emoji} {insight.drag.label}
+              </span>
+            </span>
+          )}
+        </motion.div>
+      )}
 
       {empty ? (
         <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center text-sm text-white/40">
@@ -271,25 +346,49 @@ export function Analytics({ data, wellness }: { data: TrackerData; wellness: Wel
             )}
           </Panel>
 
-          {/* Wellness routine × mood */}
-          {wellness.items.length > 0 && (
-            <Panel title="Does your routine move your mood?">
-              <p className="-mt-1 mb-4 text-xs leading-relaxed text-white/45">
-                How taking a supplement or doing a skincare step tracks with your mood that day.
-                Keep logging both on the same days to sharpen it.
+          {/* Habits & routine × mood */}
+          <Panel title="Do your habits & routine move your mood?">
+            <p className="-mt-1 mb-4 text-xs leading-relaxed text-white/45">
+              How the things you do each day — habits, supplements, skincare — track with your mood
+              that day. Keep logging both to sharpen it.
+            </p>
+            {routineCorr.length === 0 ? (
+              <p className="text-xs text-white/40">
+                Tick off habits or your routine and log a few moods on the same days, and the
+                patterns will appear here.
               </p>
-              {wellnessCorr.length === 0 ? (
-                <p className="text-xs text-white/40">
-                  Log your supplements/skincare and a few moods on the same days, and the patterns
-                  will appear here.
-                </p>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {wellnessCorr.map((c) => (
-                    <WellnessCorrelationCard key={c.item.id} {...c} />
-                  ))}
-                </div>
-              )}
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {routineCorr.map((c) => (
+                  <ActivityCorrelationCard key={c.id} {...c} />
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          {/* Mood across the menstrual cycle */}
+          {phaseMood && (
+            <Panel title="Mood across your cycle">
+              <p className="-mt-1 mb-4 text-xs leading-relaxed text-white/45">
+                Your average mood in each phase. Many people feel a dip in the luteal phase (PMS) and
+                a lift around ovulation — see what's true for you.
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {phaseMood.map(({ ph, avg, n }) => (
+                  <div
+                    key={ph}
+                    className="rounded-xl border border-white/10 bg-black/20 p-3 text-center"
+                    style={{ boxShadow: `inset 0 -24px 34px -28px ${PHASE_META[ph].color}` }}
+                  >
+                    <div className="text-lg font-semibold" style={{ color: PHASE_META[ph].color }}>
+                      {avg! > 0 ? "+" : ""}
+                      {avg}
+                    </div>
+                    <div className="text-xs text-white/70">{PHASE_META[ph].label}</div>
+                    <div className="text-[10px] text-white/35">{n} check-in{n === 1 ? "" : "s"}</div>
+                  </div>
+                ))}
+              </div>
             </Panel>
           )}
 
@@ -433,29 +532,25 @@ function CorrelationCard({ f, r, n }: Corr) {
   );
 }
 
-function WellnessCorrelationCard({
-  item,
-  r,
-  n,
-  doneDays,
-}: {
-  item: WellnessItem;
-  r: number | null;
-  n: number;
-  doneDays: number;
-}) {
+function ActivityCorrelationCard({ emoji, label, kind, r, n, doneDays }: ActivityCorr) {
   const rr = r ?? 0;
   const positive = rr >= 0;
   const color = positive ? "#22c55e" : "#ef4444";
-  const verb = item.kind === "supplement" ? "take" : "use";
   const feel = positive ? "better" : "worse";
   const rel = reliability(doneDays);
+  const name = label.toLowerCase();
+  const sentence =
+    kind === "supplement"
+      ? `On days you take ${name}, you tend to feel ${feel}.`
+      : kind === "skincare"
+        ? `On days you use ${name}, you tend to feel ${feel}.`
+        : `On days you ${name}, you tend to feel ${feel}.`;
 
   return (
     <div className="rounded-xl border border-white/10 bg-black/20 p-3.5">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-sm text-white/85">
-          <span>{item.emoji}</span> {item.name}
+          <span>{emoji}</span> {label}
         </span>
         <span
           className="text-xs font-medium tabular-nums text-white/30"
@@ -465,9 +560,7 @@ function WellnessCorrelationCard({
           {rr.toFixed(2)}
         </span>
       </div>
-      <p className="mt-1.5 text-xs leading-relaxed text-white/65">
-        On days you {verb} {item.name.toLowerCase()}, you tend to feel {feel}.
-      </p>
+      <p className="mt-1.5 text-xs leading-relaxed text-white/65">{sentence}</p>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
         <div
           className="h-full rounded-full"

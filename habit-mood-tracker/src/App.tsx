@@ -13,13 +13,19 @@ import { CheckInPanel } from "./components/CheckInPanel";
 import { HabitsPanel } from "./components/HabitsPanel";
 import { Analytics } from "./components/Analytics";
 import { WellnessPanel } from "./components/WellnessPanel";
+import { HealthPanel } from "./components/HealthPanel";
+import { CyclePanel } from "./components/CyclePanel";
 import { useWellness } from "./hooks/useWellness";
+import { useHealth } from "./hooks/useHealth";
+import { useCycle } from "./hooks/useCycle";
 
 function Dashboard() {
   const { session, signOut } = useAuth();
   const user = session!.user;
   const data = useData(user.id);
   const wellness = useWellness(user.id);
+  const health = useHealth(user.id);
+  const cycle = useCycle(user.id);
   const today = format(new Date(), "yyyy-MM-dd");
   const name = (user.user_metadata?.display_name as string) || user.email?.split("@")[0] || "there";
 
@@ -68,18 +74,20 @@ function Dashboard() {
       {data.loading ? (
         <div className="py-24 text-center text-sm text-white/40">Loading your data…</div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(320px,0.85fr)_1.4fr]">
-          <div className="space-y-6">
+        <div className="space-y-6">
+          {/* Log + habits: two balanced columns that look right whether empty or full */}
+          <div className="grid items-start gap-6 lg:grid-cols-2">
             <CheckInPanel factors={data.factors} onSave={data.addEntry} />
             <HabitsPanel data={data} today={today} />
           </div>
-          <Analytics data={data} wellness={wellness} />
-        </div>
-      )}
 
-      {!data.loading && (
-        <div className="mt-6">
+          {/* Analytics spans full width, so its empty state reads as an intentional
+              banner rather than a gap beside the taller check-in column */}
+          <Analytics data={data} wellness={wellness} cycle={cycle} />
+
           <WellnessPanel data={wellness} today={today} />
+          <HealthPanel data={health} />
+          <CyclePanel data={cycle} />
         </div>
       )}
 
