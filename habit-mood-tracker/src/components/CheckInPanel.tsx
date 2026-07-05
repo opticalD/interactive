@@ -44,36 +44,40 @@ export function CheckInPanel({ factors, onSave }: Props) {
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
       <h3 className="mb-4 text-sm font-semibold tracking-wide text-white/80">How do you feel right now?</h3>
 
-      <div className="flex justify-center">
-        <MoodPad valence={valence} arousal={arousal} onChange={(v, a) => { setValence(v); setArousal(a); }} />
-      </div>
-
-      {factors.length > 0 && (
-        <div className="mt-6 space-y-3">
-          {factors.map((f) => (
-            <div key={f.id}>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-white/70">
-                  {f.emoji} {f.label}
-                </span>
-                <span className="text-white/45">
-                  {factorVal(f)}
-                  {f.kind === "hours" ? "h" : ""}
-                </span>
-              </div>
-              <input
-                type="range"
-                min={f.min}
-                max={f.max}
-                step={f.kind === "hours" ? 0.5 : 1}
-                value={factorVal(f)}
-                onChange={(e) => setValues((p) => ({ ...p, [f.key]: Number(e.target.value) }))}
-                className="h-1.5 w-full cursor-pointer accent-cyan-400"
-              />
-            </div>
-          ))}
+      {/* Mood pad and factor sliders side by side on wider screens so the panel
+          fills its width instead of stacking into a tall column. */}
+      <div className="grid gap-6 md:grid-cols-2 md:items-center">
+        <div className="flex justify-center">
+          <MoodPad valence={valence} arousal={arousal} onChange={(v, a) => { setValence(v); setArousal(a); }} />
         </div>
-      )}
+
+        {factors.length > 0 && (
+          <div className="space-y-3">
+            {factors.map((f) => (
+              <div key={f.id}>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="text-white/70">
+                    {f.emoji} {f.label}
+                  </span>
+                  <span className="text-white/45">
+                    {factorVal(f)}
+                    {f.kind === "hours" ? "h" : ""}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={f.min}
+                  max={f.max}
+                  step={f.kind === "hours" ? 0.5 : 1}
+                  value={factorVal(f)}
+                  onChange={(e) => setValues((p) => ({ ...p, [f.key]: Number(e.target.value) }))}
+                  className="h-1.5 w-full cursor-pointer accent-cyan-400"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="mt-5">
         <div className="mb-2 text-xs text-white/50">What's driving it?</div>

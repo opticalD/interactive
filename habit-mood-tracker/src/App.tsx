@@ -75,18 +75,15 @@ function Dashboard() {
         <div className="py-24 text-center text-sm text-white/40">Loading your data…</div>
       ) : (
         <div className="space-y-6">
-          {/* Log + habits: two balanced columns that look right whether empty or full */}
-          <div className="grid items-start gap-6 lg:grid-cols-2">
-            <div data-tour="checkin">
-              <CheckInPanel factors={data.factors} onSave={data.addEntry} />
-            </div>
-            <div data-tour="habits">
-              <HabitsPanel data={data} today={today} />
-            </div>
+          {/* Every section is full-width and stacks — no mismatched-height columns,
+              so there's never a gap. The check-in panel lays out internally in two
+              columns to use the width. */}
+          <div data-tour="checkin">
+            <CheckInPanel factors={data.factors} onSave={data.addEntry} />
           </div>
-
-          {/* Analytics spans full width, so its empty state reads as an intentional
-              banner rather than a gap beside the taller check-in column */}
+          <div data-tour="habits">
+            <HabitsPanel data={data} today={today} />
+          </div>
           <div data-tour="analytics">
             <Analytics data={data} wellness={wellness} />
           </div>
