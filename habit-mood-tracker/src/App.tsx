@@ -77,17 +77,29 @@ function Dashboard() {
         <div className="space-y-6">
           {/* Log + habits: two balanced columns that look right whether empty or full */}
           <div className="grid items-start gap-6 lg:grid-cols-2">
-            <CheckInPanel factors={data.factors} onSave={data.addEntry} />
-            <HabitsPanel data={data} today={today} />
+            <div data-tour="checkin">
+              <CheckInPanel factors={data.factors} onSave={data.addEntry} />
+            </div>
+            <div data-tour="habits">
+              <HabitsPanel data={data} today={today} />
+            </div>
           </div>
 
           {/* Analytics spans full width, so its empty state reads as an intentional
               banner rather than a gap beside the taller check-in column */}
-          <Analytics data={data} wellness={wellness} cycle={cycle} />
+          <div data-tour="analytics">
+            <Analytics data={data} wellness={wellness} cycle={cycle} />
+          </div>
 
-          <WellnessPanel data={wellness} today={today} />
-          <HealthPanel data={health} />
-          <CyclePanel data={cycle} />
+          <div data-tour="wellness">
+            <WellnessPanel data={wellness} today={today} />
+          </div>
+          <div data-tour="health">
+            <HealthPanel data={health} />
+          </div>
+          <div data-tour="cycle">
+            <CyclePanel data={cycle} />
+          </div>
         </div>
       )}
 
