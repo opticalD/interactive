@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useCrypto } from "../auth/CryptoProvider";
 import {
-  DEFAULT_FACTORS,
-  DEFAULT_HABITS,
   type Habit,
   type HabitLog,
   type MoodEntry,
@@ -19,9 +17,6 @@ interface MoodSecret {
   note: string | null;
 }
 
-// Module-level guard so first-run seeding can't run twice even if the Dashboard
-// remounts (e.g. while auth/encryption settle). Keyed by user id, survives remounts.
-const seedingUsers = new Set<string>();
 
 export interface TrackerData {
   habits: Habit[];
@@ -57,28 +52,10 @@ export function useData(userId: string | undefined): TrackerData {
       supabase.from("tracked_factors").select("*").order("sort_order"),
       supabase.from("mood_entries").select("*").order("logged_at", { ascending: false }),
     ]);
-    let hab = (h.data as Habit[]) ?? [];
-    let fac = (f.data as TrackedFactor[]) ?? [];
-
-    // First-run seeding for a brand-new account (guarded against double-run
-    // across remounts via a module-level, user-keyed guard).
-    if (hab.length === 0 && fac.length === 0 && !seedingUsers.has(userId)) {
-      seedingUsers.add(userId);
-      const { error: he } = await supabase.from("habits").insert(DEFAULT_HABITS);
-      const { error: fe } = await supabase.from("tracked_factors").insert(DEFAULT_FACTORS);
-      if (he || fe) {
-        // Seeding failed (e.g. auth still settling right after signup) — release
-        // the guard so the next reload can retry cleanly instead of getting stuck.
-        seedingUsers.delete(userId);
-      } else {
-        const [h2, f2] = await Promise.all([
-          supabase.from("habits").select("*").eq("archived", false).order("sort_order"),
-          supabase.from("tracked_factors").select("*").order("sort_order"),
-        ]);
-        hab = (h2.data as Habit[]) ?? [];
-        fac = (f2.data as TrackedFactor[]) ?? [];
-      }
-    }
+    // Default habits & factors are seeded server-side by a trigger on signup —
+    // the client never seeds, which removes the auth-race that caused duplicates.
+    const hab = (h.data as Habit[]) ?? [];
+    const fac = (f.data as TrackedFactor[]) ?? [];
 
     // Decrypt mood entries (and migrate any legacy plaintext rows to encrypted).
     type RawEntry = MoodEntry & { secret: string | null };
