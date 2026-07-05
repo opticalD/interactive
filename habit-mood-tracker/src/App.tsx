@@ -88,7 +88,7 @@ function Dashboard() {
           {/* Analytics spans full width, so its empty state reads as an intentional
               banner rather than a gap beside the taller check-in column */}
           <div data-tour="analytics">
-            <Analytics data={data} wellness={wellness} cycle={cycle} />
+            <Analytics data={data} wellness={wellness} />
           </div>
 
           <div data-tour="wellness">
@@ -98,7 +98,7 @@ function Dashboard() {
             <HealthPanel data={health} />
           </div>
           <div data-tour="cycle">
-            <CyclePanel data={cycle} />
+            <CyclePanel data={cycle} entries={data.entries} />
           </div>
         </div>
       )}

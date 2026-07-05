@@ -1,12 +1,17 @@
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { motion } from "framer-motion";
 import type { CycleData } from "../hooks/useCycle";
-import { cycleStats, PHASE_META } from "../lib/cycle";
+import { cycleStats, moodByPhase, PHASE_META } from "../lib/cycle";
 import { FLOW_OPTIONS, PERIOD_SYMPTOMS } from "../lib/types";
 
 const today = () => format(new Date(), "yyyy-MM-dd");
 
-export function CyclePanel({ data }: { data: CycleData }) {
+interface MoodEntryLite {
+  logged_at: string;
+  valence: number;
+}
+
+export function CyclePanel({ data, entries }: { data: CycleData; entries: MoodEntryLite[] }) {
   if (!data.enabled) {
     return (
       <section>
@@ -35,6 +40,7 @@ export function CyclePanel({ data }: { data: CycleData }) {
   const stats = cycleStats(data.periods);
   const ongoing = data.periods.find((p) => !p.ended_on);
   const current = data.periods[0]; // newest
+  const phaseMood = data.periods.length ? moodByPhase(entries, data.periods) : [];
 
   return (
     <section>
@@ -172,6 +178,45 @@ export function CyclePanel({ data }: { data: CycleData }) {
             Turn off cycle tracking
           </button>
         </div>
+      </div>
+
+      {/* Mood across the cycle — shows here once there's enough data */}
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
+        <h3 className="text-sm font-semibold tracking-wide text-white/80">Mood across your cycle</h3>
+        {phaseMood.length >= 2 ? (
+          <>
+            <p className="mt-1 text-xs leading-relaxed text-white/45">
+              Your average mood in each phase. Many people dip in the luteal phase (PMS) and lift
+              around ovulation — see what's true for you.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {phaseMood.map(({ ph, avg, n }) => (
+                <div
+                  key={ph}
+                  className="rounded-xl border border-white/10 bg-black/20 p-3 text-center"
+                  style={{ boxShadow: `inset 0 -24px 34px -28px ${PHASE_META[ph].color}` }}
+                >
+                  <div className="text-lg font-semibold" style={{ color: PHASE_META[ph].color }}>
+                    {avg! > 0 ? "+" : ""}
+                    {avg}
+                  </div>
+                  <div className="text-xs text-white/70">{PHASE_META[ph].label}</div>
+                  <div className="text-[10px] text-white/35">
+                    {n} check-in{n === 1 ? "" : "s"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-white/12 bg-white/[0.02] p-4">
+            <span className="text-2xl opacity-70">🌙</span>
+            <p className="text-xs leading-relaxed text-white/45">
+              Keep logging your mood through your cycle to unlock this. Once you have check-ins in a
+              couple of different phases, your average mood in each phase will appear right here.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

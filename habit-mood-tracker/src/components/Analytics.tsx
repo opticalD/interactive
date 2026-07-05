@@ -17,10 +17,8 @@ import {
 import { motion } from "framer-motion";
 import { classify, valenceColor } from "../lib/moods";
 import { mean, pearson } from "../lib/stats";
-import { PHASE_META, phaseForDate, type Phase } from "../lib/cycle";
 import type { TrackerData } from "../hooks/useData";
 import type { WellnessData } from "../hooks/useWellness";
-import type { CycleData } from "../hooks/useCycle";
 
 function dayKey(iso: string) {
   return format(parseISO(iso), "yyyy-MM-dd");
@@ -36,30 +34,8 @@ interface ActivityCorr {
   doneDays: number;
 }
 
-export function Analytics({
-  data,
-  wellness,
-  cycle,
-}: {
-  data: TrackerData;
-  wellness: WellnessData;
-  cycle: CycleData;
-}) {
+export function Analytics({ data, wellness }: { data: TrackerData; wellness: WellnessData }) {
   const { entries, factors, habits, logs } = data;
-
-  // Average mood in each menstrual-cycle phase (only when cycle tracking is on).
-  const phaseMood = useMemo(() => {
-    if (!cycle.enabled || cycle.periods.length === 0) return null;
-    const buckets: Record<Phase, number[]> = { menstrual: [], follicular: [], ovulatory: [], luteal: [] };
-    for (const e of entries) {
-      const ph = phaseForDate(dayKey(e.logged_at), cycle.periods);
-      if (ph) buckets[ph].push(e.valence);
-    }
-    const rows = (Object.keys(buckets) as Phase[])
-      .map((ph) => ({ ph, n: buckets[ph].length, avg: buckets[ph].length ? Math.round(mean(buckets[ph])) : null }))
-      .filter((r) => r.n > 0);
-    return rows.length >= 2 ? rows : null;
-  }, [cycle.enabled, cycle.periods, entries]);
 
   const stats = useMemo(() => {
     const valences = entries.map((e) => e.valence);
@@ -365,32 +341,6 @@ export function Analytics({
               </div>
             )}
           </Panel>
-
-          {/* Mood across the menstrual cycle */}
-          {phaseMood && (
-            <Panel title="Mood across your cycle">
-              <p className="-mt-1 mb-4 text-xs leading-relaxed text-white/45">
-                Your average mood in each phase. Many people feel a dip in the luteal phase (PMS) and
-                a lift around ovulation — see what's true for you.
-              </p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {phaseMood.map(({ ph, avg, n }) => (
-                  <div
-                    key={ph}
-                    className="rounded-xl border border-white/10 bg-black/20 p-3 text-center"
-                    style={{ boxShadow: `inset 0 -24px 34px -28px ${PHASE_META[ph].color}` }}
-                  >
-                    <div className="text-lg font-semibold" style={{ color: PHASE_META[ph].color }}>
-                      {avg! > 0 ? "+" : ""}
-                      {avg}
-                    </div>
-                    <div className="text-xs text-white/70">{PHASE_META[ph].label}</div>
-                    <div className="text-[10px] text-white/35">{n} check-in{n === 1 ? "" : "s"}</div>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          )}
 
           <div className="grid gap-6 md:grid-cols-[1.3fr_1fr]">
             {/* Heatmap */}

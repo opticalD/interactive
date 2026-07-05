@@ -1,4 +1,4 @@
-import { differenceInCalendarDays, parseISO } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import type { PeriodLog } from "./types";
 
 export type Phase = "menstrual" | "follicular" | "ovulatory" | "luteal";
@@ -106,4 +106,28 @@ export function phaseForDate(dateISO: string, periods: PeriodLog[]): Phase | nul
   const since = differenceInCalendarDays(parseISO(dateISO), parseISO(base));
   const day = (since % stats.avgCycleLength) + 1;
   return phaseForDay(day, stats.avgCycleLength, stats.avgPeriodLength);
+}
+
+export interface PhaseMoodRow {
+  ph: Phase;
+  n: number;
+  avg: number | null;
+}
+
+/** Average mood (valence) in each cycle phase, for phases that have check-ins. */
+export function moodByPhase(
+  entries: { logged_at: string; valence: number }[],
+  periods: PeriodLog[]
+): PhaseMoodRow[] {
+  const buckets: Record<Phase, number[]> = { menstrual: [], follicular: [], ovulatory: [], luteal: [] };
+  for (const e of entries) {
+    const ph = phaseForDate(format(parseISO(e.logged_at), "yyyy-MM-dd"), periods);
+    if (ph) buckets[ph].push(e.valence);
+  }
+  return (Object.keys(buckets) as Phase[])
+    .map((ph) => {
+      const vs = buckets[ph];
+      return { ph, n: vs.length, avg: vs.length ? Math.round(vs.reduce((a, b) => a + b, 0) / vs.length) : null };
+    })
+    .filter((r) => r.n > 0);
 }
