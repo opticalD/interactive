@@ -1,13 +1,13 @@
 App/build
 App/Pods
 App/output
-App/App/public
 DerivedData
 xcuserdata
 
-# Cordova plugins for Capacitor
-capacitor-cordova-ios-plugins
-
 # Generated Config files
-App/App/capacitor.config.json
 App/App/config.xml
+
+# NOTE: App/App/public (embedded web build), capacitor.config.json and the
+# capacitor-cordova-ios-plugins folder are intentionally committed so this
+# standalone repo opens & builds in Xcode with just `pod install` — no web app
+# source needed alongside. Refresh them with `npm run sync`.

@@ -1,0 +1,25 @@
+{
+	"appId": "com.opticald.bloom",
+	"appName": "Bloom",
+	"webDir": "www",
+	"backgroundColor": "#0a0a12",
+	"ios": {
+		"backgroundColor": "#0a0a12",
+		"contentInset": "always"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 600,
+			"backgroundColor": "#0a0a12",
+			"showSpinner": false
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#0a0a12"
+		}
+	},
+	"packageClassList": [
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
+	]
+}
