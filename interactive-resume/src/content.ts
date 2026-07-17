@@ -12,11 +12,11 @@ export const profile = {
   email: "shubpatt@gmail.com",
   phone: "+91 77354 06476",
   summary:
-    "Software engineer with ~2 years across platform engineering, DevOps and site reliability, currently at A.P. Moller — Maersk owning 40+ production backend services on Kubernetes. I turn operational toil into automation: GitOps-driven CI/CD, Infrastructure-as-Code, and observability that keeps services fast, visible and reliable.",
+    "DevOps engineer with 3 years across platform engineering, DevOps and site reliability, currently at A.P. Moller — Maersk owning 50+ production backend services on Kubernetes. I turn operational toil into automation: GitOps-driven CI/CD, Infrastructure-as-Code, DevSecOps and SLI/SLO-driven observability — plus Azure FinOps cost optimization — that keep services fast, secure, visible and reliable.",
   links: [
     { label: "LinkedIn", href: "https://www.linkedin.com/in/shubhranshu-pattanaik-12ty/" },
     { label: "GitHub", href: "https://github.com/opticalD" },
-    { label: "Résumé (PDF)", href: "https://drive.google.com/file/d/10DlxfdeEdfC7d0IdCh2UfYXwPOSiRLTG/view?usp=sharing" },
+    { label: "Résumé (PDF)", href: "/Shubhranshu_Pattanaik_Resume.pdf" },
   ],
 };
 
@@ -28,7 +28,7 @@ export interface Metric {
 }
 
 export const metrics: Metric[] = [
-  { value: "40+", label: "Production services owned on Kubernetes", accent: "#06b6d4" },
+  { value: "50+", label: "Production services owned on Kubernetes", accent: "#06b6d4" },
   { value: "99.9%", label: "Deployment success rate", accent: "#22c55e" },
   { value: "−35%", label: "Mean Time to Resolution (MTTR)", accent: "#a855f7" },
   { value: "+50%", label: "Deployment & setup efficiency", accent: "#f59e0b" },
@@ -51,13 +51,15 @@ export const experience: Experience[] = [
     location: "Bengaluru, India",
     accent: "#06b6d4",
     bullets: [
-      "Own and operate 40+ production backend services across Kubernetes clusters — deployments, scaling, pod-level debugging, and live incident resolution.",
-      "Designed zero-downtime CI/CD pipelines with GitHub Actions following GitOps principles, sustaining a 99.9% deployment success rate for critical server-side apps.",
-      "Provision environment-specific infrastructure with Terraform & Ansible (IaC), cutting environment setup time by 50%.",
-      "Automated application and database deployment workflows through scripting and pipeline orchestration, improving deployment efficiency by ~50% and reducing toil.",
-      "Built monitoring, dashboards and alerting with Prometheus, Grafana & Loki, increasing system visibility and reducing incident response time.",
-      "Diagnosed runtime, configuration and infrastructure issues across backend services, improving MTTR by 35%.",
-      "Partnered with app teams on release management and post-incident reviews, embedding reliability early — contributing to a 25% drop in post-release incidents.",
+      "Own and operate 50+ production backend services across 100+ Kubernetes clusters and Linux systems — deployments, scaling, pod-level debugging, config management and live incident resolution.",
+      "Design zero-downtime CI/CD pipelines with GitHub Actions and YAML workflows, enforcing SonarQube quality gates and GitOps principles — sustaining a 99.9% deployment success rate.",
+      "Provision environment-specific infrastructure with Terraform & Ansible (IaC) and automate deployment workflows, cutting setup time and improving deployment efficiency by 50%.",
+      "Secure the software supply chain with DevSecOps: Trivy image scanning across Harbor & GHCR registries, plus HashiCorp Vault for container secrets management.",
+      "Define and monitor strict SLIs/SLOs and build dashboards & alerting with Prometheus, Grafana and Loki, increasing visibility and reducing incident response time.",
+      "Lead on-call rotations resolving production-critical incidents, improving Mean Time to Resolution (MTTR) by 35%.",
+      "Drive Azure FinOps cost optimization — analysing utilization metrics (RAM, I/O, throughput) to rightsize and decommission resources.",
+      "Maintain Oracle PL/SQL and SQL Server scripts & stored procedures for database provisioning across multiple projects.",
+      "Partner with app teams on release management and post-incident reviews, embedding reliability early — contributing to a 25% drop in post-release incidents.",
     ],
   },
 ];
@@ -73,9 +75,27 @@ export const skillGroups: SkillGroup[] = [
   { label: "Cloud", emoji: "☁️", items: ["AWS", "Microsoft Azure"] },
   { label: "Containers & Orchestration", emoji: "📦", items: ["Kubernetes", "Docker", "Helm"] },
   { label: "Infrastructure as Code", emoji: "🏗️", items: ["Terraform", "Ansible"] },
-  { label: "CI/CD & GitOps", emoji: "🔁", items: ["GitHub Actions", "Jenkins", "GitOps"] },
-  { label: "Observability", emoji: "📈", items: ["Prometheus", "Grafana", "Loki", "Alertmanager"] },
-  { label: "Databases", emoji: "🗄️", items: ["PostgreSQL", "MySQL", "SQL Server"] },
+  {
+    label: "CI/CD & GitOps",
+    emoji: "🔁",
+    items: ["GitHub Actions", "Jenkins", "GitOps", "YAML Pipelines", "SonarQube"],
+  },
+  {
+    label: "Observability & SRE",
+    emoji: "📈",
+    items: ["Prometheus", "Grafana", "Loki", "Alertmanager", "SLI/SLO", "On-call"],
+  },
+  {
+    label: "Security & DevSecOps",
+    emoji: "🔐",
+    items: ["Trivy", "HashiCorp Vault", "Harbor", "GHCR"],
+  },
+  {
+    label: "FinOps",
+    emoji: "💰",
+    items: ["Azure rightsizing", "Cost governance", "Decommissioning"],
+  },
+  { label: "Databases", emoji: "🗄️", items: ["PostgreSQL", "MySQL", "SQL Server", "Oracle PL/SQL"] },
   { label: "Foundations", emoji: "🧠", items: ["Linux", "DSA", "OOP", "Operating Systems"] },
 ];
 
@@ -112,7 +132,7 @@ export const chapters: Chapter[] = [
   {
     year: "Now",
     title: "Reliability at scale",
-    body: "Operating 40+ production services across Kubernetes clusters, running zero-downtime GitOps CI/CD at a 99.9% success rate, and cutting MTTR by 35%. Recognised with a Spot Award for backend platform reliability.",
+    body: "Operating 50+ production services across 100+ Kubernetes clusters, running zero-downtime GitOps CI/CD at a 99.9% success rate, securing the supply chain with DevSecOps, and cutting MTTR by 35%. Recognised with a Spot Award for backend platform reliability.",
     emoji: "⚡",
     accent: "#f59e0b",
   },
@@ -128,8 +148,8 @@ export interface Project {
 export const projects: Project[] = [
   {
     name: "Zero-downtime CI/CD",
-    blurb: "GitOps-driven pipelines for critical server-side apps, sustaining a 99.9% deployment success rate with zero downtime.",
-    tags: ["GitHub Actions", "GitOps", "Release Mgmt"],
+    blurb: "GitOps-driven pipelines (GitHub Actions + YAML) with SonarQube quality gates, sustaining a 99.9% deployment success rate.",
+    tags: ["GitHub Actions", "GitOps", "SonarQube"],
     href: "#",
   },
   {
@@ -139,9 +159,21 @@ export const projects: Project[] = [
     href: "#",
   },
   {
-    name: "Observability & incident response",
-    blurb: "Dashboards and alerting with Prometheus, Grafana & Loki — improving visibility and reducing MTTR by 35%.",
-    tags: ["Prometheus", "Grafana", "Loki"],
+    name: "Observability & SLOs",
+    blurb: "SLI/SLO-driven dashboards and alerting with Prometheus, Grafana & Loki — plus on-call rotations that cut MTTR by 35%.",
+    tags: ["Prometheus", "Grafana", "SLI/SLO"],
+    href: "#",
+  },
+  {
+    name: "DevSecOps supply chain",
+    blurb: "Trivy image scanning across Harbor & GHCR and HashiCorp Vault secrets management, hardening containerized deployments.",
+    tags: ["Trivy", "Vault", "Harbor / GHCR"],
+    href: "#",
+  },
+  {
+    name: "Azure FinOps",
+    blurb: "Cost optimization from real utilization metrics (RAM, I/O, throughput) — rightsizing and decommissioning Azure resources.",
+    tags: ["Azure", "FinOps", "Cost governance"],
     href: "#",
   },
 ];
