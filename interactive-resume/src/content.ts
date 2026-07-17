@@ -51,7 +51,7 @@ export const experience: Experience[] = [
     location: "Bengaluru, India",
     accent: "#06b6d4",
     bullets: [
-      "Own and operate 50+ production backend services across 100+ Kubernetes clusters and Linux systems — deployments, scaling, pod-level debugging, config management and live incident resolution.",
+      "Own and operate 50+ production backend services across 10+ Kubernetes clusters and Linux systems — deployments, scaling, pod-level debugging, config management and live incident resolution.",
       "Design zero-downtime CI/CD pipelines with GitHub Actions and YAML workflows, enforcing SonarQube quality gates and GitOps principles — sustaining a 99.9% deployment success rate.",
       "Provision environment-specific infrastructure with Terraform & Ansible (IaC) and automate deployment workflows, cutting setup time and improving deployment efficiency by 50%.",
       "Secure the software supply chain with DevSecOps: Trivy image scanning across Harbor & GHCR registries, plus HashiCorp Vault for container secrets management.",
@@ -132,7 +132,7 @@ export const chapters: Chapter[] = [
   {
     year: "Now",
     title: "Reliability at scale",
-    body: "Operating 50+ production services across 100+ Kubernetes clusters, running zero-downtime GitOps CI/CD at a 99.9% success rate, securing the supply chain with DevSecOps, and cutting MTTR by 35%. Recognised with a Spot Award for backend platform reliability.",
+    body: "Operating 50+ production services across 10+ Kubernetes clusters, running zero-downtime GitOps CI/CD at a 99.9% success rate, securing the supply chain with DevSecOps, and cutting MTTR by 35%. Recognised with a Spot Award for backend platform reliability.",
     emoji: "⚡",
     accent: "#f59e0b",
   },
