@@ -10,6 +10,7 @@ import { ProjectList } from "./components/ProjectList";
  * renderer they'll never use.
  */
 const Scene = lazy(() => import("./scene/Scene").then((m) => ({ default: m.Scene })));
+const MazeMode = lazy(() => import("./maze/MazeMode").then((m) => ({ default: m.MazeMode })));
 import {
   applyTheme,
   loadThemeChoice,
@@ -21,7 +22,7 @@ import {
   type ThemeChoice,
 } from "./theme";
 
-type Mode = "explore" | "read";
+type Mode = "explore" | "maze" | "read";
 
 /** WebGL can be absent or blocked. Detect once, then never offer a broken view. */
 function webglAvailable(): boolean {
@@ -82,7 +83,8 @@ export default function App() {
     [activeIndex, select]
   );
 
-  // Arrow keys walk the constellation; Escape steps back out.
+  // Arrow keys walk the constellation; Escape steps back out. The maze binds
+  // the same keys to walking, so this only applies to the orbit view.
   useEffect(() => {
     if (mode !== "explore") return;
     const onKey = (e: KeyboardEvent) => {
@@ -117,6 +119,8 @@ export default function App() {
         {announcement}
       </p>
 
+      {/* The maze brings its own HUD, including the way out. */}
+      {mode !== "maze" && (
       <TopBar
         mode={mode}
         setMode={setMode}
@@ -127,8 +131,24 @@ export default function App() {
         }}
         supportsWebgl={supportsWebgl}
       />
+      )}
 
-      {mode === "explore" ? (
+      {mode === "maze" ? (
+        <main className="fixed inset-0">
+          <Suspense fallback={<SceneLoading />}>
+            <MazeMode
+              resolved={resolved}
+              reducedMotion={reducedMotion}
+              found={discovered}
+              onFind={(slug) =>
+                setDiscovered((prev) => (prev.has(slug) ? prev : new Set(prev).add(slug)))
+              }
+              onAnnounce={setAnnouncement}
+              onExit={() => setMode("explore")}
+            />
+          </Suspense>
+        </main>
+      ) : mode === "explore" ? (
         <main className="fixed inset-0">
           <Suspense fallback={<SceneLoading />}>
             <Scene
@@ -245,19 +265,19 @@ function TopBar({
             role="group"
             aria-label="View mode"
           >
-            {(["explore", "read"] as Mode[]).map((m) => (
+            {(["explore", "maze", "read"] as Mode[]).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
                 aria-pressed={mode === m}
-                className="rounded-full px-3 py-1.5 text-[12px] font-medium capitalize transition-colors"
+                className="rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors"
                 style={{
                   background: mode === m ? "var(--accent-wash)" : "transparent",
                   color: mode === m ? "var(--ink)" : "var(--ink-faint)",
                 }}
               >
-                {m === "explore" ? "Explore" : "Read"}
+                {m === "explore" ? "Explore" : m === "maze" ? "Maze" : "Read"}
               </button>
             ))}
           </div>

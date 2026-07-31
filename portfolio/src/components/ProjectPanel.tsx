@@ -8,9 +8,19 @@ type Props = {
   reducedMotion: boolean;
   onClose: () => void;
   onStep: (delta: number) => void;
+  /** In the maze you walk between projects, so prev/next would be a lie. */
+  hideStepper?: boolean;
 };
 
-export function ProjectPanel({ project, index, total, reducedMotion, onClose, onStep }: Props) {
+export function ProjectPanel({
+  project,
+  index,
+  total,
+  reducedMotion,
+  onClose,
+  onStep,
+  hideStepper = false,
+}: Props) {
   return (
     <motion.aside
       key={project.slug}
@@ -100,6 +110,7 @@ export function ProjectPanel({ project, index, total, reducedMotion, onClose, on
         </a>
       </div>
 
+      {hideStepper ? null : (
       <div className="mt-5 flex items-center justify-between border-t pt-3" style={{ borderColor: "var(--hairline)" }}>
         <button
           type="button"
@@ -121,6 +132,7 @@ export function ProjectPanel({ project, index, total, reducedMotion, onClose, on
           Next →
         </button>
       </div>
+      )}
     </motion.aside>
   );
 }
