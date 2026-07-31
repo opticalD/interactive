@@ -17,7 +17,7 @@ import {
   WALL_T,
   cellCentre,
 } from "./generate";
-import { EYE, SPEED, TURN, clamp, resolve, type Look, type PlayerInput } from "./usePlayer";
+import { EYE, SPEED, SPRINT, TURN, clamp, resolve, type Look, type PlayerInput } from "./usePlayer";
 
 /** How close you must get before a project reveals itself. */
 export const REVEAL = 2.1;
@@ -298,9 +298,10 @@ function Walker({
 
     const sin = Math.sin(look.current.yaw);
     const cos = Math.cos(look.current.yaw);
+    const speed = SPEED * (input.sprint ? SPRINT : 1);
     // -Z is forward in three.js, so forward maps to (-sin, -cos).
-    const dx = (-sin * input.forward + cos * input.strafe) * SPEED * step;
-    const dz = (-cos * input.forward - sin * input.strafe) * SPEED * step;
+    const dx = (-sin * input.forward + cos * input.strafe) * speed * step;
+    const dz = (-cos * input.forward - sin * input.strafe) * speed * step;
 
     const [nx, nz] = resolve(camera.position.x + dx, camera.position.z + dz);
     camera.position.x = nx;
@@ -308,8 +309,9 @@ function Walker({
 
     const moving = Math.abs(input.forward) + Math.abs(input.strafe) > 0.01;
     if (!reducedMotion && moving) {
-      bob.current += step * 9;
-      camera.position.y = EYE + Math.sin(bob.current) * 0.035;
+      // Bob keeps pace with the legs, otherwise a sprint reads as gliding.
+      bob.current += step * (input.sprint ? 14 : 9);
+      camera.position.y = EYE + Math.sin(bob.current) * (input.sprint ? 0.055 : 0.035);
     } else {
       camera.position.y += (EYE - camera.position.y) * Math.min(1, step * 8);
     }

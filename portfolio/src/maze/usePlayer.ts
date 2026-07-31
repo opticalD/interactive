@@ -4,6 +4,9 @@ import { CELL, COLS, E, MAZE, N, ROWS, S, W, openingYaw } from "./generate";
 export const EYE = 1.5;
 const RADIUS = 0.42;
 const SPEED = 4.5;
+/** Held Shift, or a fully deflected thumb stick. Enough to make backtracking
+ *  cheap without turning the corridors into a blur. */
+const SPRINT = 1.85;
 const TURN = 2.0; // radians/sec, for keyboard turning
 
 export type Look = { yaw: number; pitch: number };
@@ -12,6 +15,7 @@ export type PlayerInput = {
   forward: number; // -1..1
   strafe: number; // -1..1
   turn: number; // -1..1, keyboard only
+  sprint: boolean;
 };
 
 /**
@@ -26,7 +30,7 @@ export function useControls(enabled: boolean, canvas: HTMLElement | null) {
     yaw: openingYaw(MAZE.start.cx, MAZE.start.cz),
     pitch: 0,
   });
-  const touch = useRef<PlayerInput>({ forward: 0, strafe: 0, turn: 0 });
+  const touch = useRef<PlayerInput>({ forward: 0, strafe: 0, turn: 0, sprint: false });
   const locked = useRef(false);
 
   useEffect(() => {
@@ -98,10 +102,13 @@ export function useControls(enabled: boolean, canvas: HTMLElement | null) {
       const turn = locked.current
         ? touch.current.turn
         : (k.ArrowLeft ? 1 : 0) - (k.ArrowRight ? 1 : 0) + touch.current.turn;
+      // On touch there's no Shift, so pushing the stick to its edge sprints.
+      const stickHard = Math.hypot(touch.current.forward, touch.current.strafe) > 0.85;
       return {
         forward: clamp(forward, -1, 1),
         strafe: clamp(strafe, -1, 1),
         turn: clamp(turn, -1, 1),
+        sprint: Boolean(k.ShiftLeft || k.ShiftRight) || stickHard,
       };
     },
     []
@@ -144,4 +151,4 @@ export function clamp(v: number, lo: number, hi: number) {
   return Math.min(hi, Math.max(lo, v));
 }
 
-export { SPEED, TURN, RADIUS };
+export { SPEED, SPRINT, TURN, RADIUS };

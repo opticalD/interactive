@@ -3,8 +3,8 @@ import { projects } from "../content";
 export const CELL = 3.4;
 export const WALL_H = 2.6;
 export const WALL_T = 0.26;
-export const COLS = 9;
-export const ROWS = 9;
+export const COLS = 7;
+export const ROWS = 7;
 
 /** Wall bits per cell. Shared walls are stored on both neighbours. */
 export const N = 1;

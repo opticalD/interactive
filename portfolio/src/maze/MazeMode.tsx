@@ -71,11 +71,50 @@ export function MazeMode({
     });
   }, [look]);
 
-  // Pointer lock is a nicety on top of the keyboard, so failures are silent.
-  const requestLock = useCallback(() => {
-    if (!host || document.pointerLockElement === host) return;
-    void Promise.resolve(host.requestPointerLock()).catch(() => {});
-  }, [host]);
+  /**
+   * Mouse look, two ways. Dragging works immediately and is what people try
+   * first; a plain click escalates to pointer lock for continuous looking.
+   * A drag must not also request the lock, and neither must a click on the
+   * panel's own links and buttons.
+   */
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("a, button")) return;
+    drag.current = { x: e.clientX, y: e.clientY, moved: false };
+  }, []);
+
+  const onMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      const d = drag.current;
+      if (!d || document.pointerLockElement) return;
+      const dx = e.clientX - d.x;
+      const dy = e.clientY - d.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+      look.current.yaw -= dx * 0.005;
+      look.current.pitch = Math.max(-0.9, Math.min(0.9, look.current.pitch - dy * 0.005));
+      d.x = e.clientX;
+      d.y = e.clientY;
+      setYaw(look.current.yaw);
+    },
+    [look]
+  );
+
+  const onMouseUp = useCallback(() => {
+    drag.current = null;
+  }, []);
+
+  // Pointer lock is a nicety on top of the rest, so failures are silent.
+  const requestLock = useCallback(
+    (e: React.MouseEvent) => {
+      if (!host || document.pointerLockElement === host) return;
+      if (drag.current?.moved) return;
+      if ((e.target as HTMLElement).closest("a, button")) return;
+      void Promise.resolve(host.requestPointerLock()).catch(() => {});
+    },
+    [host]
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -126,6 +165,10 @@ export function MazeMode({
       ref={setHost}
       className="fixed inset-0 touch-none"
       onClick={requestLock}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -236,8 +279,9 @@ function Hint({
               Six things are hidden in here. Go and find them.
             </p>
             <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "var(--ink-faint)" }}>
-              <strong>W A S D</strong> or arrow keys to walk · click to look with the mouse
-              {locked.current ? "" : " · Esc to release it"}
+              <strong>W A S D</strong> or arrow keys to walk · hold <strong>Shift</strong> to
+              run · drag the mouse to look around, or click to hold the cursor
+              {locked.current ? "" : " (Esc releases it)"}
             </p>
           </div>
         </motion.div>
