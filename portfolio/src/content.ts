@@ -27,21 +27,20 @@ export interface Project {
 }
 
 /**
- * Where each pavilion sits in the scene, and the form it takes. Positions are
- * hand-placed rather than generated so the constellation reads as composed —
- * nothing overlaps from the opening camera angle, and the walk between them
- * has a rhythm.
+ * Where each pavilion sits in the scene. Positions are hand-placed rather than
+ * generated so the constellation reads as composed — nothing overlaps from the
+ * opening camera angle, and the walk between them has a rhythm.
+ *
+ * The form each one takes is decided by slug in scene/shapes.tsx, where it can
+ * mean something.
  */
-export const PLACEMENT: Record<
-  string,
-  { position: [number, number, number]; shape: "prism" | "orb" | "slab" | "tower" }
-> = {
-  bloom: { position: [-3.7, 0.4, 1.3], shape: "orb" },
-  "bloom-ios": { position: [-1.8, -0.65, -2.1], shape: "tower" },
-  pulse: { position: [0.3, 0.85, 2.7], shape: "prism" },
-  "my-story": { position: [2.7, -0.4, -0.5], shape: "slab" },
-  ascend: { position: [4.0, 0.55, 2.0], shape: "tower" },
-  signal: { position: [1.3, 0.2, -4.4], shape: "prism" },
+export const PLACEMENT: Record<string, { position: [number, number, number] }> = {
+  bloom: { position: [-3.7, 0.4, 1.3] },
+  "bloom-ios": { position: [-1.8, -0.65, -2.1] },
+  pulse: { position: [0.3, 0.85, 2.7] },
+  "my-story": { position: [2.7, -0.4, -0.5] },
+  ascend: { position: [4.0, 0.55, 2.0] },
+  signal: { position: [1.3, 0.2, -4.4] },
 };
 
 /** Widest pavilion centre, before compression. */

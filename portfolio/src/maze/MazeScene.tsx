@@ -18,6 +18,7 @@ import {
   cellCentre,
 } from "./generate";
 import { EYE, SPEED, SPRINT, TURN, clamp, resolve, type Look, type PlayerInput } from "./usePlayer";
+import { ProjectShape } from "../scene/shapes";
 
 /** How close you must get before a project reveals itself. */
 export const REVEAL = 2.1;
@@ -218,7 +219,6 @@ function MazePavilion({
   found: boolean;
   reducedMotion: boolean;
 }) {
-  const mat = useRef<THREE.MeshPhysicalMaterial>(null);
   const group = useRef<THREE.Group>(null);
   const spot = MAZE.spots[project.slug];
   const [x, z] = cellCentre(spot.cx, spot.cz);
@@ -226,34 +226,50 @@ function MazePavilion({
   const accent = useMemo(() => new THREE.Color(project.accent), [project.accent]);
   const frosted = useMemo(() => new THREE.Color("#b9b9c6"), []);
 
-  useFrame((_, delta) => {
-    if (!mat.current || !group.current) return;
+  // One shared instance, as in the constellation — the shapes are several
+  // meshes each, and they all have to change colour together.
+  const material = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color("#b9b9c6"),
+        emissive: new THREE.Color("#b9b9c6"),
+        emissiveIntensity: 0.08,
+        transmission: 0.9,
+        thickness: 0.9,
+        roughness: 0.16,
+        metalness: 0,
+        ior: 1.42,
+        clearcoat: 0.7,
+      }),
+    []
+  );
+
+  useEffect(() => () => material.dispose(), [material]);
+
+  useFrame(({ camera }, delta) => {
+    if (!group.current) return;
     const k = Math.min(1, delta * 3.5);
-    mat.current.color.lerp(found ? accent : frosted, k);
-    mat.current.emissive.lerp(found ? accent : frosted, k);
+    material.color.lerp(found ? accent : frosted, k);
+    material.emissive.lerp(found ? accent : frosted, k);
     const target = found ? 0.5 : 0.08;
-    mat.current.emissiveIntensity += (target - mat.current.emissiveIntensity) * k;
-    if (!reducedMotion) group.current.rotation.y += delta * 0.25;
+    material.emissiveIntensity += (target - material.emissiveIntensity) * k;
+
+    // Turn to face whoever's looking. The shapes carry their meaning on one
+    // face, and in a maze you arrive from whichever corridor you happened to
+    // take — so the object comes round to you rather than the reverse.
+    const want = Math.atan2(camera.position.x - x, camera.position.z - z);
+    const current = group.current.rotation.y;
+    let diff = want - current;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    group.current.rotation.y = reducedMotion ? want : current + diff * Math.min(1, delta * 3);
   });
 
   return (
     <group position={[x, 1.05, z]}>
-      <group ref={group}>
-        <mesh>
-          <icosahedronGeometry args={[0.55, 0]} />
-          <meshPhysicalMaterial
-            ref={mat}
-            color={frosted}
-            emissive={frosted}
-            emissiveIntensity={0.08}
-            transmission={0.9}
-            thickness={0.9}
-            roughness={0.16}
-            metalness={0}
-            ior={1.42}
-            clearcoat={0.7}
-          />
-        </mesh>
+      {/* Slightly smaller here: the alcoves are tighter than open space. */}
+      <group ref={group} scale={0.78}>
+        <ProjectShape slug={project.slug} material={material} animate={!reducedMotion} />
       </group>
 
       {/* A pool of its own colour on the floor — the glow you catch down a
