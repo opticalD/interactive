@@ -26,6 +26,44 @@ export interface Project {
   kind: "web" | "ios";
 }
 
+/**
+ * Where each pavilion sits in the scene, and the form it takes. Positions are
+ * hand-placed rather than generated so the constellation reads as composed —
+ * nothing overlaps from the opening camera angle, and the walk between them
+ * has a rhythm.
+ */
+export const PLACEMENT: Record<
+  string,
+  { position: [number, number, number]; shape: "prism" | "orb" | "slab" | "tower" }
+> = {
+  bloom: { position: [-3.7, 0.4, 1.3], shape: "orb" },
+  "bloom-ios": { position: [-1.8, -0.65, -2.1], shape: "tower" },
+  pulse: { position: [0.3, 0.85, 2.7], shape: "prism" },
+  "my-story": { position: [2.7, -0.4, -0.5], shape: "slab" },
+  ascend: { position: [4.0, 0.55, 2.0], shape: "tower" },
+  signal: { position: [1.3, 0.2, -4.4], shape: "prism" },
+};
+
+/** Widest pavilion centre, before compression. */
+export const SPREAD = 4.0;
+
+/**
+ * A portrait phone can't hold a wide row without the camera retreating so far
+ * that everything turns to specks. So the constellation folds inward instead:
+ * narrower screens pull the pieces toward the centre and lean on depth for
+ * separation.
+ */
+export function compressionFor(aspect: number): number {
+  if (aspect < 0.8) return 0.42;
+  if (aspect < 1.2) return 0.68;
+  return 1;
+}
+
+export function placementFor(slug: string, compression: number): [number, number, number] {
+  const [x, y, z] = PLACEMENT[slug].position;
+  return [x * compression, y, z];
+}
+
 export const projects: Project[] = [
   {
     slug: "bloom",

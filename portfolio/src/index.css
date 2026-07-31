@@ -1,7 +1,20 @@
 @import "tailwindcss";
 
+/* Defaults for the first paint, before applyTheme() runs. Light-first. */
 :root {
-  color-scheme: dark;
+  --bg: #f4f1ec;
+  --bg-tint: #ffffff;
+  --ink: #1a1a1f;
+  --ink-soft: rgba(26, 26, 31, 0.62);
+  --ink-faint: rgba(26, 26, 31, 0.4);
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.78);
+  --hairline: rgba(26, 26, 31, 0.1);
+  --shadow: 0 1px 2px rgba(26, 26, 31, 0.04), 0 12px 32px -12px rgba(26, 26, 31, 0.16);
+  --accent: #7c8cff;
+  --accent-wash: rgba(124, 140, 255, 0.1);
+  --accent-edge: rgba(124, 140, 255, 0.34);
+  color-scheme: light;
 }
 
 html,
@@ -12,18 +25,101 @@ body,
 
 body {
   margin: 0;
-  background: radial-gradient(1200px 600px at 15% -10%, #1e1b4b 0%, transparent 60%),
-    radial-gradient(1000px 550px at 100% 0%, #164e63 0%, transparent 55%),
-    radial-gradient(900px 500px at 50% 100%, #4c1d3a 0%, transparent 50%), #07070d;
-  color: #e8e8f0;
+  background: var(--bg);
+  color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* The surface drifts with the selected project — adaptive, not decorative. */
+  transition: background-color 700ms ease, color 400ms ease;
+  overscroll-behavior: none;
+}
+
+@theme {
+  --font-display: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+/* ── Soft glass ───────────────────────────────────────────────────────────
+ * One layer of translucency, a hairline edge, and a soft shadow to lift it
+ * off the scene. Used on panels that sit *over* the 3D view, where the blur
+ * earns its cost by keeping text legible against moving colour.
+ */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+
+.glass-strong {
+  background: var(--glass-strong);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+
+/* Where blur isn't supported, fall back to a solid surface rather than
+   letting the scene bleed through the text. */
+@supports not ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .glass,
+  .glass-strong {
+    background: var(--bg-tint);
+  }
+}
+
+/* ── Accessibility ────────────────────────────────────────────────────────*/
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+/* Visible only when focused — the standard skip-link pattern. */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -100px;
+  z-index: 100;
+  transition: top 160ms ease;
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Motion is meant to explain where something went. If it isn't wanted, it
+   goes away entirely rather than just running faster. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 ::-webkit-scrollbar {
   width: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--hairline);
   border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
