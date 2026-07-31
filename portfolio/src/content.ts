@@ -122,4 +122,24 @@ export const projects: Project[] = [
     github: "https://github.com/opticalD/ascend-devops-roadmap",
     kind: "web",
   },
+  {
+    slug: "signal",
+    emoji: "📡",
+    name: "Signal",
+    tagline: "Your tech news, filtered",
+    description:
+      "A news reader built around one idea: pick three sources, not twelve, and read them in ten minutes. It pulls 19 feeds — Hacker News, TLDR, Lobsters, the CNCF and Kubernetes blogs, Last Week in AWS, Import AI, Stratechery — into a single time-sorted river.",
+    highlights: [
+      "Opens with three sources on; the other sixteen stay switched off",
+      "A real 10-minute skim timer, capped at 3 items per source",
+      "HN and Lobsters threads get equal billing with the headline",
+      "OPML export, so the list moves to Feedly or FreshRSS later",
+    ],
+    tags: ["React", "TypeScript", "Netlify Functions", "RSS", "Framer Motion"],
+    accent: "#38bdf8",
+    accent2: "#f59e0b",
+    live: "https://signal-news-reader.netlify.app",
+    github: "https://github.com/opticalD/signal-news-reader",
+    kind: "web",
+  },
 ];
