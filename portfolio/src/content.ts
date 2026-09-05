@@ -1,3 +1,9 @@
+/** Spelled out for prose — "Seven things I built" reads better than "7". */
+export const COUNT_WORDS = [
+  "No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight",
+  "Nine", "Ten", "Eleven", "Twelve",
+] as const;
+
 export const profile = {
   name: "Shubhranshu Pattanaik",
   tagline: "DevOps engineer who builds pretty, interactive side-projects",
@@ -41,6 +47,7 @@ export const PLACEMENT: Record<string, { position: [number, number, number] }> =
   "my-story": { position: [2.7, -0.4, -0.5] },
   ascend: { position: [4.0, 0.55, 2.0] },
   signal: { position: [1.3, 0.2, -4.4] },
+  reel: { position: [2.15, -1.2, 3.9] },
 };
 
 /** Widest pavilion centre, before compression. */
@@ -179,4 +186,27 @@ export const projects: Project[] = [
     github: "https://github.com/opticalD/signal-news-reader",
     kind: "web",
   },
+  {
+    slug: "reel",
+    emoji: "🎞️",
+    name: "Reel",
+    tagline: "A weekly programme of what to watch",
+    description:
+      "A recommender that narrows instead of listing. You mark a few dozen titles from a 900-title ballot, and each week it sets a programme of eight \u2014 newly landed on streaming, showing in cinemas, and one deliberate blind spot \u2014 with the reasoning printed beside every pick.",
+    highlights: [
+      "A taste model you can read line by line and argue with, not a black box",
+      "Reasons drawn from real counts, down to theme level: \"you've said yes to slow burn nine times\"",
+      "One dated batch a week, fixed until Monday, instead of an endless feed",
+      "Set like a repertory cinema's programme sheet \u2014 ruled entries, no poster grid anywhere",
+    ],
+    tags: ["React", "TypeScript", "Netlify Functions", "TMDB", "Tailwind v4"],
+    accent: "#e0483c",
+    accent2: "#e8d9b8",
+    live: "https://reel-programme.netlify.app",
+    github: "https://github.com/opticalD/interactive/tree/master/reel",
+    kind: "web",
+  },
 ];
+
+/** How many projects there are, as a word, for headings that say it in prose. */
+export const projectCountWord = COUNT_WORDS[projects.length] ?? String(projects.length);

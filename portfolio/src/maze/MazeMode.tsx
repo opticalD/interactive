@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { AnimatePresence, motion } from "framer-motion";
-import { projects } from "../content";
+import { projects, projectCountWord } from "../content";
 import { ProjectPanel } from "../components/ProjectPanel";
 import type { Resolved } from "../theme";
 import { CELL, COLS, MAZE, ROWS, cellCentre } from "./generate";
@@ -276,7 +276,7 @@ function Hint({
         >
           <div className="glass max-w-xs rounded-2xl px-5 py-4 text-center">
             <p className="text-[13px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-              Six things are hidden in here. Go and find them.
+              {projectCountWord} things are hidden in here. Go and find them.
             </p>
             <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "var(--ink-faint)" }}>
               <strong>W A S D</strong> or arrow keys to walk · hold <strong>Shift</strong> to

@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { profile, projects } from "./content";
+import { profile, projects, projectCountWord } from "./content";
 import { ProjectPanel } from "./components/ProjectPanel";
 import { ProjectList } from "./components/ProjectList";
 
@@ -311,7 +311,7 @@ function Intro({ visible, reducedMotion }: { visible: boolean; reducedMotion: bo
         >
           <div className="glass max-w-sm rounded-2xl px-5 py-4 text-center">
             <h1 className="font-display text-xl sm:text-2xl" style={{ color: "var(--ink)" }}>
-              Six things I built
+              {projectCountWord} things I built
             </h1>
             <p className="mt-1.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
               They're floating out there, frosted over. Pick one up to see what it is —

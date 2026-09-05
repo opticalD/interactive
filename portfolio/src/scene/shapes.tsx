@@ -36,6 +36,8 @@ export function ProjectShape({
       return <Staircase material={material} />;
     case "signal":
       return <Broadcast material={material} animate={animate} />;
+    case "reel":
+      return <FilmReel material={material} animate={animate} />;
     default:
       return (
         <mesh material={material}>
@@ -224,6 +226,46 @@ function Broadcast({ material, animate }: { material: THREE.Material; animate: b
           </mesh>
         ))}
       </group>
+    </group>
+  );
+}
+
+/** Reel — a film reel: rim, hub, spokes, turning slowly. Facing the viewer. */
+function FilmReel({ material, animate }: { material: THREE.Material; animate: boolean }) {
+  const wheel = useRef<THREE.Group>(null);
+  const spokes = useMemo(
+    () => Array.from({ length: 6 }, (_, i) => (i / 6) * Math.PI * 2),
+    []
+  );
+
+  useFrame((state, delta) => {
+    if (!wheel.current) return;
+    // A reel turns; it doesn't tumble. Spinning on Z keeps the flat face
+    // toward the viewer, which is the whole rule for the flat shapes here.
+    if (animate) wheel.current.rotation.z += delta * 0.55;
+    else wheel.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.2) * 0.08;
+  });
+
+  return (
+    <group ref={wheel}>
+      {/* Rim, and an inner ring so the reel reads as a wheel rather than a hoop. */}
+      <mesh material={material}>
+        <torusGeometry args={[0.6, 0.055, 12, 40]} />
+      </mesh>
+      <mesh material={material}>
+        <torusGeometry args={[0.24, 0.045, 10, 28]} />
+      </mesh>
+      {/* Hub. */}
+      <mesh material={material} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.08, 0.08, 0.1, 16]} />
+      </mesh>
+      {spokes.map((angle, i) => (
+        <group key={i} rotation={[0, 0, angle]}>
+          <mesh material={material} position={[0, 0.42, 0]}>
+            <boxGeometry args={[0.075, 0.38, 0.06]} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
