@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+/* Two presses. Bodoni carries the voice; Archivo carries every fact. */
+@import "@fontsource-variable/bodoni-moda/opsz.css";
+@import "@fontsource-variable/bodoni-moda/opsz-italic.css";
+@import "@fontsource-variable/archivo/wght.css";
+
+/* The programme, printed on cream stock. */
+:root {
+  --paper: #f2ede3;
+  --paper-2: #e8e1d3;
+  --ink: #141210;
+  --ink-2: #57504a;
+  --ink-3: #8a8177;
+  --rule: #c9c0ae;
+  --red: #b3241e;
+  --red-wash: rgba(179, 36, 30, 0.08);
+  --shadow: 0 18px 40px -24px rgba(20, 18, 16, 0.5);
+  color-scheme: light;
+}
+
+/* The same programme, run on black stock — which is what you're holding at 9pm. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0e0d0c;
+    --paper-2: #1a1816;
+    --ink: #f2ede3;
+    --ink-2: #a79e92;
+    --ink-3: #6e665c;
+    --rule: #312d28;
+    --red: #e0483c;
+    --red-wash: rgba(224, 72, 60, 0.12);
+    --shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.85);
+    color-scheme: dark;
+  }
+}
+
+/* An explicit choice overrides the system in both directions. */
+:root[data-stock="black"] {
+  --paper: #0e0d0c;
+  --paper-2: #1a1816;
+  --ink: #f2ede3;
+  --ink-2: #a79e92;
+  --ink-3: #6e665c;
+  --rule: #312d28;
+  --red: #e0483c;
+  --red-wash: rgba(224, 72, 60, 0.12);
+  --shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.85);
+  color-scheme: dark;
+}
+:root[data-stock="cream"] {
+  --paper: #f2ede3;
+  --paper-2: #e8e1d3;
+  --ink: #141210;
+  --ink-2: #57504a;
+  --ink-3: #8a8177;
+  --rule: #c9c0ae;
+  --red: #b3241e;
+  --red-wash: rgba(179, 36, 30, 0.08);
+  --shadow: 0 18px 40px -24px rgba(20, 18, 16, 0.5);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-red: var(--red);
+  --color-red-wash: var(--red-wash);
+  --font-display: "Bodoni Moda Variable", "Bodoni 72", Didot, Georgia, serif;
+  --font-meta: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --ease-cut: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The surfaces a browser would otherwise hand us undesigned. */
+::selection {
+  background: var(--red-wash);
+  color: var(--ink);
+}
+:root {
+  caret-color: var(--red);
+  scrollbar-color: var(--rule) var(--paper);
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border: 3px solid var(--paper);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+}
+a {
+  color: inherit;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--ink-3);
+}
+
+/* Every number in this programme is set in the metadata face, tabular. */
+.tnum {
+  font-family: var(--font-meta);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* A label is small, spaced caps in Archivo. Used for every field name. */
+.label {
+  font-family: var(--font-meta);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.meta {
+  font-family: var(--font-meta);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wood-type masthead: tight, heavy, optically sized for display. */
+.masthead {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

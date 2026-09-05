@@ -4,38 +4,102 @@
     {
       "name": "habit-mood-tracker",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "habit-mood-tracker", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "habit-mood-tracker",
+        "run",
+        "dev"
+      ],
       "port": 5171
     },
     {
       "name": "music-visualizer",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "music-visualizer", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "music-visualizer",
+        "run",
+        "dev"
+      ],
       "port": 5172
     },
     {
       "name": "interactive-resume",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "interactive-resume", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "interactive-resume",
+        "run",
+        "dev"
+      ],
       "port": 5173
     },
     {
       "name": "learning-roadmap",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "learning-roadmap", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "learning-roadmap",
+        "run",
+        "dev"
+      ],
       "port": 5174
     },
     {
       "name": "portfolio",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "portfolio", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "portfolio",
+        "run",
+        "dev"
+      ],
       "port": 5175
     },
     {
       "name": "signal",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "signal", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "signal",
+        "run",
+        "dev"
+      ],
       "port": 5176
+    },
+    {
+      "name": "four-petals",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5177",
+        "--directory",
+        "four-petals"
+      ],
+      "port": 5177
+    },
+    {
+      "name": "samsung-transfer",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "samsung-transfer",
+        "run",
+        "dev"
+      ],
+      "port": 5178
+    },
+    {
+      "name": "reel",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "reel",
+        "run",
+        "dev"
+      ],
+      "port": 5179
     }
   ]
 }
